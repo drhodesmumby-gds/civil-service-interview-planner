@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Wand2, GripVertical, Play, Clock, FileText, ClipboardPaste, Upload, FileUp, ChevronDown, ChevronUp, X, Briefcase, ScanSearch, Loader2, Bug, Terminal, HelpCircle, Sparkles, MessageSquare, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, Wand2, GripVertical, Play, Clock, FileText, ClipboardPaste, Upload, FileUp, ChevronDown, ChevronUp, X, Briefcase, ScanSearch, Loader2, Bug, Terminal, HelpCircle, Sparkles, MessageSquare, Settings, ToggleLeft, ToggleRight, KeyRound } from 'lucide-react';
 import { InterviewSection, InterviewProfile, Theme } from '../types';
 import { Button } from './Button';
 import { 
@@ -7,12 +7,14 @@ import {
   parseInterviewNotes, 
   extractJobDetails, 
   regenerateSectionNotes,
+  hasApiKey,
   DEFAULT_PLAN_PROMPT,
   DEFAULT_REGEN_PROMPT,
   DEFAULT_INTRO_PROMPT,
   DEFAULT_JOB_EXTRACT_PROMPT,
   DEFAULT_FOLLOW_UP_PROMPT
 } from '../services/geminiService';
+import { ApiKeyModal } from './ApiKeyModal';
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -117,6 +119,27 @@ export const SetupView: React.FC<SetupViewProps> = ({
     knownQuestions: ''
   });
 
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  const requireApiKey = (action: () => void) => {
+    if (hasApiKey()) {
+      action();
+    } else {
+      setPendingAction(() => action);
+      setShowApiKeyModal(true);
+    }
+  };
+
+  const handleApiKeySave = (key: string) => {
+    localStorage.setItem('gemini_api_key', key);
+    setShowApiKeyModal(false);
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
+    }
+  };
+
   const addLog = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
     const time = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, { time, message, type }]);
@@ -176,102 +199,110 @@ export const SetupView: React.FC<SetupViewProps> = ({
     }
   }, []);
 
-  const handleGenerate = async () => {
-    if (!profile.role || !profile.grade) return;
-    setIsGenerating(true);
-    try {
-      const fullProfile = { 
-        ...profile, 
-        careerHistory,
-        jobAdvertContext: jobAdvertText
-      };
-      const newSections = await generateInterviewPlan(fullProfile, prompts.PLAN);
-      setSections(newSections);
-    } catch (error) {
-      alert("Failed to generate plan. Please check your API key.");
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleGenerate = () => {
+    requireApiKey(async () => {
+      if (!profile.role || !profile.grade) return;
+      setIsGenerating(true);
+      try {
+        const fullProfile = { 
+          ...profile, 
+          careerHistory,
+          jobAdvertContext: jobAdvertText
+        };
+        const newSections = await generateInterviewPlan(fullProfile, prompts.PLAN);
+        setSections(newSections);
+      } catch (error) {
+        alert("Failed to generate plan. Please check your API key.");
+      } finally {
+        setIsGenerating(false);
+      }
+    });
   };
 
-  const handleImport = async () => {
-    if (!importText.trim()) return;
-    setIsImporting(true);
-    try {
-      const newSections = await parseInterviewNotes(importText);
-      setSections(newSections);
-      setImportText('');
-    } catch (error) {
-      alert("Failed to parse text. Please try again.");
-    } finally {
-      setIsImporting(false);
-    }
+  const handleImport = () => {
+    requireApiKey(async () => {
+      if (!importText.trim()) return;
+      setIsImporting(true);
+      try {
+        const newSections = await parseInterviewNotes(importText);
+        setSections(newSections);
+        setImportText('');
+      } catch (error) {
+        alert("Failed to parse text. Please try again.");
+      } finally {
+        setIsImporting(false);
+      }
+    });
   };
 
-  const handleRegenerateSection = async (section: InterviewSection) => {
-    setIsRegenerating(true);
-    try {
-      const fullProfile = {
-        ...profile,
-        careerHistory,
-        jobAdvertContext: jobAdvertText
-      };
-      
-      // Check if this is the first section to apply the Intro prompt logic
-      const index = sections.findIndex(s => s.id === section.id);
-      const isFirstSection = index === 0;
-      const selectedTemplate = isFirstSection ? prompts.INTRO : prompts.REGEN;
+  const handleRegenerateSection = (section: InterviewSection) => {
+    requireApiKey(async () => {
+      setIsRegenerating(true);
+      try {
+        const fullProfile = {
+          ...profile,
+          careerHistory,
+          jobAdvertContext: jobAdvertText
+        };
+        
+        // Check if this is the first section to apply the Intro prompt logic
+        const index = sections.findIndex(s => s.id === section.id);
+        const isFirstSection = index === 0;
+        const selectedTemplate = isFirstSection ? prompts.INTRO : prompts.REGEN;
 
-      const newNotes = await regenerateSectionNotes(section, fullProfile, regenerationFeedback, selectedTemplate);
-      updateSection(section.id, { notes: newNotes });
-      setRegeneratingSectionId(null);
-      setRegenerationFeedback('');
-    } catch (error) {
-      alert("Failed to regenerate notes. Please try again.");
-    } finally {
-      setIsRegenerating(false);
-    }
+        const newNotes = await regenerateSectionNotes(section, fullProfile, regenerationFeedback, selectedTemplate);
+        updateSection(section.id, { notes: newNotes });
+        setRegeneratingSectionId(null);
+        setRegenerationFeedback('');
+      } catch (error) {
+        alert("Failed to regenerate notes. Please try again.");
+      } finally {
+        setIsRegenerating(false);
+      }
+    });
   };
 
-  const handleJobAdvertExtract = async () => {
-    if (!jobAdvertText.trim()) return;
-    setIsExtractingJob(true);
-    try {
-      const details = await extractJobDetails(jobAdvertText, prompts.EXTRACT);
-      
-      setProfile(prev => {
-        const existingBehaviours = new Set(prev.behaviours || []);
-        if (details.behaviours) {
-           details.behaviours.forEach(b => {
-             const match = CIVIL_SERVICE_BEHAVIOURS.find(csb => csb.toLowerCase() === b.toLowerCase());
-             existingBehaviours.add(match || b);
-           });
+  const handleJobAdvertExtract = () => {
+    requireApiKey(async () => {
+      if (!jobAdvertText.trim()) return;
+      setIsExtractingJob(true);
+      try {
+        const details = await extractJobDetails(jobAdvertText, prompts.EXTRACT);
+        
+        setProfile(prev => {
+          const existingBehaviours = new Set(prev.behaviours || []);
+          if (details.behaviours) {
+             details.behaviours.forEach(b => {
+               const match = CIVIL_SERVICE_BEHAVIOURS.find(csb => csb.toLowerCase() === b.toLowerCase());
+               existingBehaviours.add(match || b);
+             });
+          }
+          
+          return {
+            ...prev,
+            role: details.role || prev.role,
+            grade: details.grade || prev.grade,
+            department: details.department || prev.department,
+            team: details.team || prev.team,
+            techCompetencies: details.techCompetencies || prev.techCompetencies,
+            behaviours: Array.from(existingBehaviours)
+          };
+        });
+
+        if (details.behaviours && details.behaviours.length > 0) {
+          setIsBehavioursOpen(true);
         }
         
-        return {
-          ...prev,
-          role: details.role || prev.role,
-          grade: details.grade || prev.grade,
-          department: details.department || prev.department,
-          team: details.team || prev.team,
-          techCompetencies: details.techCompetencies || prev.techCompetencies,
-          behaviours: Array.from(existingBehaviours)
-        };
-      });
+        if (details.grade && !CIVIL_SERVICE_GRADES.includes(details.grade)) {
+          setIsCustomGrade(true);
+        }
 
-      if (details.behaviours && details.behaviours.length > 0) {
-        setIsBehavioursOpen(true);
+      } catch (error) {
+        alert("Failed to extract details from job advert.");
+      } finally {
+        setIsExtractingJob(false);
       }
-      
-      if (details.grade && !CIVIL_SERVICE_GRADES.includes(details.grade)) {
-        setIsCustomGrade(true);
-      }
-
-    } catch (error) {
-      alert("Failed to extract details from job advert.");
-    } finally {
-      setIsExtractingJob(false);
-    }
+    });
   };
 
   const readPdf = async (file: File): Promise<string> => {
@@ -456,6 +487,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
           <p className={`${isGds ? 'text-[#505a5f] text-lg' : 'text-slate-500'}`}>Setup your mock interview structure manually, import existing notes, or let Gemini AI build a plan for you.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
+          <button 
+            onClick={() => setShowApiKeyModal(true)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isGds ? 'bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#e4e2e0]' : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'}`}
+          >
+            <KeyRound className="w-5 h-5" />
+            API Key
+          </button>
           <button 
             onClick={onShowAbout}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isGds ? 'bg-white text-[#1d70b8] border-2 border-[#1d70b8] hover:bg-[#f3f2f1]' : 'bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50'}`}
@@ -1018,6 +1056,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
              </div>
            )}
         </div>
+      )}
+      {showApiKeyModal && (
+        <ApiKeyModal 
+          onClose={() => {
+            setShowApiKeyModal(false);
+            setPendingAction(null);
+          }}
+          onSave={handleApiKeySave}
+          theme={theme}
+        />
       )}
     </div>
   );

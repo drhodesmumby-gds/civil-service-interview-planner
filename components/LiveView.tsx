@@ -172,8 +172,12 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
       setFollowUps(result.questions);
       setInsight(result.insights);
       setHasGeneratedFollowUpsForSection(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      if (e.message && e.message.includes('API Key not found')) {
+         alert("API Key not found. Please return to the Setup screen and configure your Gemini API Key.");
+         setShowFollowUps(false);
+      }
     } finally {
       setIsGeneratingFollowUps(false);
     }

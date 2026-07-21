@@ -2,11 +2,19 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { InterviewSection, InterviewProfile } from '../types';
 
 const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
+  const envKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const localKey = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
+  const apiKey = localKey || envKey;
   if (!apiKey) {
-    throw new Error("API Key not found in environment variables");
+    throw new Error("API Key not found in environment variables or local storage");
   }
   return new GoogleGenAI({ apiKey });
+};
+
+export const hasApiKey = (): boolean => {
+  const envKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const localKey = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
+  return !!(localKey || envKey);
 };
 
 // --- DEFAULT PROMPT TEMPLATES (British English) ---
