@@ -23,7 +23,8 @@ export enum AppState {
   SETUP = 'SETUP',
   RUNNING = 'RUNNING',
   SUMMARY = 'SUMMARY',
-  ABOUT = 'ABOUT'
+  ABOUT = 'ABOUT',
+  PROMPTS = 'PROMPTS'
 }
 
 export type Theme = 'DEFAULT' | 'GDS';

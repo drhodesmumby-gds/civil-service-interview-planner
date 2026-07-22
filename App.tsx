@@ -3,6 +3,7 @@ import { SetupView } from './components/SetupView';
 import { LiveView } from './components/LiveView';
 import { DisclaimerModal } from './components/DisclaimerModal';
 import { AboutView } from './components/AboutView';
+import { PromptEditorView } from './components/PromptEditorView';
 import { AppState, InterviewSection, Theme } from './types';
 
 const App: React.FC = () => {
@@ -46,6 +47,7 @@ const App: React.FC = () => {
               setCareerHistory={setCareerHistory}
               onStart={() => setAppState(AppState.RUNNING)}
               onShowAbout={() => setAppState(AppState.ABOUT)}
+              onShowPrompts={() => setAppState(AppState.PROMPTS)}
               theme={theme}
               toggleTheme={toggleTheme}
             />
@@ -55,6 +57,15 @@ const App: React.FC = () => {
         {appState === AppState.ABOUT && (
           <div className="flex-1 overflow-hidden">
             <AboutView 
+              onBack={() => setAppState(AppState.SETUP)}
+              theme={theme}
+            />
+          </div>
+        )}
+
+        {appState === AppState.PROMPTS && (
+          <div className="flex-1 overflow-hidden">
+            <PromptEditorView 
               onBack={() => setAppState(AppState.SETUP)}
               theme={theme}
             />

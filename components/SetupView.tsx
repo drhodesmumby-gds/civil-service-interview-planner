@@ -13,11 +13,7 @@ import {
   AVAILABLE_MODELS,
   getSelectedModel,
   setSelectedModel,
-  DEFAULT_PLAN_PROMPT,
-  DEFAULT_REGEN_PROMPT,
-  DEFAULT_INTRO_PROMPT,
-  DEFAULT_JOB_EXTRACT_PROMPT,
-  DEFAULT_FOLLOW_UP_PROMPT
+  getStoredPrompts
 } from '../services/geminiService';
 import { ApiKeyModal } from './ApiKeyModal';
 import mammoth from 'mammoth';
@@ -30,6 +26,7 @@ interface SetupViewProps {
   setCareerHistory: React.Dispatch<React.SetStateAction<string>>;
   onStart: () => void;
   onShowAbout: () => void;
+  onShowPrompts: () => void;
   theme: Theme;
   toggleTheme: () => void;
 }
@@ -73,6 +70,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   setCareerHistory,
   onStart,
   onShowAbout,
+  onShowPrompts,
   theme,
   toggleTheme
 }) => {
@@ -89,24 +87,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isCustomGrade, setIsCustomGrade] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   
-  // Prompt Customisation State
-  const [prompts, setPrompts] = useState({
-    PLAN: DEFAULT_PLAN_PROMPT,
-    REGEN: DEFAULT_REGEN_PROMPT,
-    INTRO: DEFAULT_INTRO_PROMPT,
-    EXTRACT: DEFAULT_JOB_EXTRACT_PROMPT,
-    FOLLOWUP: DEFAULT_FOLLOW_UP_PROMPT
-  });
-  const [selectedPromptType, setSelectedPromptType] = useState<PromptType>('PLAN');
-
   // Regeneration State
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<string | null>(null);
   const [regenerationFeedback, setRegenerationFeedback] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
-
+  
   // Debug State
   const [debugMode, setDebugMode] = useState(false);
-  const [showPromptEditor, setShowPromptEditor] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
   
@@ -215,11 +202,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
           careerHistory,
           jobAdvertContext: jobAdvertText
         };
-        const newSections = await generateInterviewPlan(fullProfile, prompts.PLAN);
+        const newSections = await generateInterviewPlan(fullProfile, getStoredPrompts().PLAN);
         setSections(newSections);
       } catch (error) {
-        alert("Failed to generate plan. Please check your API key.");
-      } finally {
+      console.error("Generate Plan Error:", error);
+      alert("Failed to generate plan. Please check your API key or console for details.");
+    } finally {
         setIsGenerating(false);
       }
     });
@@ -503,6 +491,17 @@ export const SetupView: React.FC<SetupViewProps> = ({
           >
             <KeyRound className="w-5 h-5" />
             API Key
+          </button>
+          <button 
+            onClick={onShowPrompts}
+            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
+              isGds 
+                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] font-bold hover:bg-[#e4e2e0] shadow-[0_2px_0_#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]' 
+                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
+            }`}
+          >
+            <Settings className="w-5 h-5 text-blue-500" />
+            Prompt Settings
           </button>
           <button 
             onClick={onShowAbout}
@@ -1055,10 +1054,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
                </div>
                <div className="h-4 w-px bg-slate-600"></div>
                <button 
-                 onClick={() => setShowPromptEditor(!showPromptEditor)}
-                 className={`text-xs font-medium flex items-center gap-1 ${showPromptEditor ? 'text-blue-400' : 'text-slate-400 hover:text-white'}`}
+                 onClick={onShowPrompts}
+                 className="text-xs font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1"
                >
-                 <Settings className="w-3 h-3" /> Prompt Editor
+                 <Settings className="w-3 h-3" /> Open Prompt Editor Page
                </button>
                <div className="h-4 w-px bg-slate-600"></div>
                <div className="flex items-center gap-1.5 text-xs text-slate-300">
@@ -1083,61 +1082,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
              </div>
            </div>
 
-           {showPromptEditor ? (
-             <div className="flex-1 flex flex-col p-4 bg-slate-800 overflow-hidden">
-                <div className="flex justify-between items-center mb-3">
-                   <div className="flex gap-2">
-                     {(['PLAN', 'REGEN', 'INTRO', 'EXTRACT', 'FOLLOWUP'] as PromptType[]).map(type => (
-                       <button
-                         key={type}
-                         onClick={() => setSelectedPromptType(type)}
-                         className={`px-3 py-1 rounded text-xs font-bold ${selectedPromptType === type ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
-                       >
-                         {type}
-                       </button>
-                     ))}
-                   </div>
-                   <button 
-                     onClick={() => setPrompts(prev => ({ 
-                        ...prev, 
-                        [selectedPromptType]: 
-                          selectedPromptType === 'PLAN' ? DEFAULT_PLAN_PROMPT : 
-                          selectedPromptType === 'REGEN' ? DEFAULT_REGEN_PROMPT :
-                          selectedPromptType === 'INTRO' ? DEFAULT_INTRO_PROMPT :
-                          selectedPromptType === 'EXTRACT' ? DEFAULT_JOB_EXTRACT_PROMPT :
-                          DEFAULT_FOLLOW_UP_PROMPT
-                     }))}
-                     className="text-xs text-orange-400 hover:text-orange-300"
-                   >
-                     Reset to Default
-                   </button>
-                </div>
-                <p className="text-xs text-slate-500 mb-2 font-mono">
-                  Supported Placeholders: 
-                  {selectedPromptType === 'PLAN' && " {{ROLE}} {{GRADE}} {{DEPARTMENT}} {{TEAM}} {{LENGTH}} {{CAREER_HISTORY}} {{JOB_CONTEXT}} {{KNOWN_QUESTIONS_CONTEXT}} {{SELECTED_BEHAVIOURS}} {{TECH_COMPETENCIES}}"}
-                  {(selectedPromptType === 'REGEN' || selectedPromptType === 'INTRO') && " {{TITLE}} {{QUESTION_TEXT}} {{ROLE}} {{GRADE}} {{DURATION}} {{CAREER_HISTORY}} {{CURRENT_NOTES}} {{FEEDBACK}}"}
-                  {selectedPromptType === 'EXTRACT' && " {{JOB_ADVERT_TEXT}}"}
-                  {selectedPromptType === 'FOLLOWUP' && " {{SECTION_TITLE}} {{SECTION_QUESTION}} {{PLANNED_ANSWER}} {{CAREER_HISTORY}}"}
-                </p>
-                <textarea
-                  className="flex-1 bg-slate-900 text-slate-300 font-mono text-xs p-3 rounded border border-slate-700 focus:border-blue-500 outline-none resize-none"
-                  value={prompts[selectedPromptType]}
-                  onChange={(e) => setPrompts(prev => ({ ...prev, [selectedPromptType]: e.target.value }))}
-                  spellCheck={false}
-                />
-             </div>
-           ) : (
-             <div className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-xs">
-               {logs.length === 0 && <span className="text-slate-600 italic">No logs yet. Try uploading a file.</span>}
-               {logs.map((log, i) => (
-                 <div key={i} className={`flex gap-3 ${log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-green-400' : 'text-slate-300'}`}>
-                   <span className="text-slate-600 shrink-0">[{log.time}]</span>
-                   <span>{log.message}</span>
-                 </div>
-               ))}
-               <div ref={logsEndRef} />
-             </div>
-           )}
+           <div className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-xs">
+             {logs.length === 0 && <span className="text-slate-600 italic">No logs yet. Try uploading a file.</span>}
+             {logs.map((log, i) => (
+               <div key={i} className={`flex gap-3 ${log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-green-400' : 'text-slate-300'}`}>
+                 <span className="text-slate-600 shrink-0">[{log.time}]</span>
+                 <span>{log.message}</span>
+               </div>
+             ))}
+             <div ref={logsEndRef} />
+           </div>
         </div>
       )}
       {showApiKeyModal && (

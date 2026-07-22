@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { InterviewSection, InterviewProfile } from '../types';
+import { getCriteriaContext } from '../utils/criteriaUtils';
 
 export const AVAILABLE_MODELS = [
   { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash (Fast & Responsive)' },
@@ -63,6 +64,7 @@ export const DEFAULT_PLAN_PROMPT = `Act as an expert UK Civil Service interview 
 
 **Requirements:**
 1. {{SELECTED_BEHAVIOURS}}
+{{SELECTED_BEHAVIOURS_DETAIL}}
 2. {{TECH_COMPETENCIES}}
 
 **TIMING RULES (CRITICAL):**
@@ -160,17 +162,110 @@ CANDIDATE'S CAREER HISTORY:
 const fillTemplate = (template: string, replacements: Record<string, string>) => {
   let result = template;
   for (const [key, value] of Object.entries(replacements)) {
+    // Only replace if value exists, else remove the placeholder to avoid leaving {{...}} behind
     result = result.split(`{{${key}}}`).join(value || '');
   }
   return result;
 };
 
-export const generateInterviewPlan = async (profile: InterviewProfile, promptTemplate: string = DEFAULT_PLAN_PROMPT): Promise<InterviewSection[]> => {
+export type PromptType = 'PLAN' | 'REGEN' | 'INTRO' | 'EXTRACT' | 'FOLLOWUP';
+
+export interface PromptTemplates {
+  PLAN: string;
+  REGEN: string;
+  INTRO: string;
+  EXTRACT: string;
+  FOLLOWUP: string;
+}
+
+export const DEFAULT_PROMPTS: PromptTemplates = {
+  PLAN: DEFAULT_PLAN_PROMPT,
+  REGEN: DEFAULT_REGEN_PROMPT,
+  INTRO: DEFAULT_INTRO_PROMPT,
+  EXTRACT: DEFAULT_JOB_EXTRACT_PROMPT,
+  FOLLOWUP: DEFAULT_FOLLOW_UP_PROMPT,
+};
+
+const LOCAL_STORAGE_PROMPTS_KEY = 'custom_prompts';
+
+export const getStoredPrompts = (): PromptTemplates => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_PROMPTS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return { ...DEFAULT_PROMPTS, ...parsed };
+      }
+    } catch (e) {
+      console.error('Failed to parse stored prompts', e);
+    }
+  }
+  return { ...DEFAULT_PROMPTS };
+};
+
+export const setStoredPrompts = (prompts: PromptTemplates): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_PROMPTS_KEY, JSON.stringify(prompts));
+    } catch (e) {
+      console.error('Failed to save prompts to localStorage', e);
+    }
+  }
+};
+
+export const resetStoredPrompt = (type: PromptType): PromptTemplates => {
+  const current = getStoredPrompts();
+  current[type] = DEFAULT_PROMPTS[type];
+  setStoredPrompts(current);
+  return current;
+};
+
+export const resetStoredPrompts = (): PromptTemplates => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(LOCAL_STORAGE_PROMPTS_KEY);
+  }
+  return { ...DEFAULT_PROMPTS };
+};
+
+export const exportPromptsToJson = (): void => {
+  const prompts = getStoredPrompts();
+  const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'civil-service-prompts.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+export const importPromptsFromJson = (jsonText: string): PromptTemplates => {
+  const parsed = JSON.parse(jsonText);
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error('Invalid JSON format');
+  }
+  const updated: PromptTemplates = {
+    PLAN: typeof parsed.PLAN === 'string' ? parsed.PLAN : DEFAULT_PLAN_PROMPT,
+    REGEN: typeof parsed.REGEN === 'string' ? parsed.REGEN : DEFAULT_REGEN_PROMPT,
+    INTRO: typeof parsed.INTRO === 'string' ? parsed.INTRO : DEFAULT_INTRO_PROMPT,
+    EXTRACT: typeof parsed.EXTRACT === 'string' ? parsed.EXTRACT : DEFAULT_JOB_EXTRACT_PROMPT,
+    FOLLOWUP: typeof parsed.FOLLOWUP === 'string' ? parsed.FOLLOWUP : DEFAULT_FOLLOW_UP_PROMPT,
+  };
+  setStoredPrompts(updated);
+  return updated;
+};
+
+export const generateInterviewPlan = async (profile: InterviewProfile, promptTemplate: string = getStoredPrompts().PLAN): Promise<InterviewSection[]> => {
   const ai = getAiClient();
   
   const selectedBehaviours = profile.behaviours && profile.behaviours.length > 0 
     ? `Focused Behaviours: ${profile.behaviours.join(', ')}` 
     : "Select 3-5 relevant Civil Service Behaviours based on the role and grade.";
+
+  const selectedBehavioursDetail = profile.behaviours && profile.behaviours.length > 0
+    ? getCriteriaContext('behaviours', profile.grade, profile.behaviours)
+    : "";
 
   const techCompetencies = profile.techCompetencies 
     ? `Technical Competencies to cover: ${profile.techCompetencies}` 
@@ -194,6 +289,7 @@ export const generateInterviewPlan = async (profile: InterviewProfile, promptTem
     JOB_CONTEXT: jobContext,
     KNOWN_QUESTIONS_CONTEXT: knownQuestionsContext,
     SELECTED_BEHAVIOURS: selectedBehaviours,
+    SELECTED_BEHAVIOURS_DETAIL: selectedBehavioursDetail,
     TECH_COMPETENCIES: techCompetencies
   });
 
@@ -239,7 +335,7 @@ export const generateInterviewPlan = async (profile: InterviewProfile, promptTem
   }
 };
 
-export const extractJobDetails = async (jobAdvertText: string, promptTemplate: string = DEFAULT_JOB_EXTRACT_PROMPT): Promise<Partial<InterviewProfile>> => {
+export const extractJobDetails = async (jobAdvertText: string, promptTemplate: string = getStoredPrompts().EXTRACT): Promise<Partial<InterviewProfile>> => {
   const ai = getAiClient();
   const prompt = fillTemplate(promptTemplate, {
     JOB_ADVERT_TEXT: jobAdvertText
@@ -285,7 +381,7 @@ export interface FollowUpItem {
   answerContext: string;
 }
 
-export const generateFollowUpQuestions = async (section: InterviewSection, careerHistory: string = '', promptTemplate: string = DEFAULT_FOLLOW_UP_PROMPT): Promise<{questions: FollowUpItem[], insights: string}> => {
+export const generateFollowUpQuestions = async (section: InterviewSection, careerHistory: string = '', promptTemplate: string = getStoredPrompts().FOLLOWUP): Promise<{questions: FollowUpItem[], insights: string}> => {
   const ai = getAiClient();
   const prompt = fillTemplate(promptTemplate, {
     SECTION_TITLE: section.title,
@@ -336,7 +432,7 @@ export const generateFollowUpQuestions = async (section: InterviewSection, caree
   }
 };
 
-export const regenerateSectionNotes = async (section: InterviewSection, profile: InterviewProfile, feedback: string, promptTemplate: string = DEFAULT_REGEN_PROMPT): Promise<string> => {
+export const regenerateSectionNotes = async (section: InterviewSection, profile: InterviewProfile, feedback: string, promptTemplate: string = getStoredPrompts().REGEN): Promise<string> => {
    const ai = getAiClient();
    
    const prompt = fillTemplate(promptTemplate, {
