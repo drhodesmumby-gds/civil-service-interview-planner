@@ -16,11 +16,11 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ onAccept }) =>
         <div className="bg-[#0b0c0c] text-white p-4 border-b-4 border-[#d4351c] flex items-center gap-3 mb-6">
           <ShieldAlert className="w-8 h-8 text-[#ffdd00] shrink-0" />
           <div>
-            <h2 className="govuk-heading-m mb-0 flex items-center gap-2" style={{ color: 'white' }}>
+            <h2 className="govuk-heading-m mb-0" style={{ color: 'white' }}>
               Important Usage Notice
-              <span className="bg-[#ffdd00] text-[#0b0c0c] text-xs font-bold px-2 py-0.5">
+              <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-left-2 align-middle" style={{ marginTop: '-4px' }}>
                 NOTICE
-              </span>
+              </strong>
             </h2>
             <p className="govuk-body-s mb-0" style={{ color: '#cbd5e1' }}>
               Please read carefully before proceeding.
