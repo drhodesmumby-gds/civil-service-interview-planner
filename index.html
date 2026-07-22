@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://esm.sh https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://generativelanguage.googleapis.com https://esm.sh https://cdn.jsdelivr.net blob: data:; img-src 'self' data: blob:; worker-src 'self' blob:;">
     <title>Civil Service Interview Companion</title>
-    <!-- Keeping Tailwind for layout utilities during transition -->
+    <!-- Keeping Tailwind for layout utilities during transition, but disable preflight to prevent overriding GOV.UK styles -->
+    <script>
+      window.tailwind = {
+        config: {
+          corePlugins: {
+            preflight: false,
+          }
+        }
+      }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="importmap">
 {

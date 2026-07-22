@@ -800,11 +800,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
               <div className="relative">
                 <button 
                   onClick={() => setShowExportMenu(!showExportMenu)} 
-                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-1"
-                >
-                  <Download className="w-4 h-4"/>
+                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
                   Export Notes
-                  <ChevronDown className="w-3 h-3 ml-1" />
                 </button>
 
                 {showExportMenu && (
@@ -835,8 +832,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </div>
             )}
 
-            <button onClick={addSection} className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-1">
-              <Plus className="w-4 h-4"/>
+            <button onClick={addSection} className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
               Add Section
             </button>
           </div>
@@ -869,23 +865,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
                           placeholder="e.g., Leadership Behaviour"
                         />
                       </div>
-                      <div className="w-32 govuk-form-group mb-0">
-                        <label className="govuk-label govuk-!-font-weight-bold flex items-center gap-1">
-                          <Clock className="w-4 h-4"/> Mins
+                      <div className="govuk-form-group mb-0">
+                        <label className="govuk-label govuk-!-font-weight-bold">
+                          Mins
                         </label>
                         <input
                           type="number"
                           value={section.durationMinutes}
                           onChange={(e) => updateSection(section.id, { durationMinutes: Number(e.target.value) })}
-                          className="govuk-input"
+                          className="govuk-input govuk-input--width-3"
                           min="1"
                         />
                       </div>
                     </div>
                     
                     <div className="govuk-form-group mb-0">
-                        <label className="govuk-label govuk-!-font-weight-bold flex items-center gap-1">
-                          <HelpCircle className="w-4 h-4"/> Question Text (Optional)
+                        <label className="govuk-label govuk-!-font-weight-bold">
+                          Question Text (Optional)
                         </label>
                         <input
                           type="text"
@@ -898,12 +894,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
                     <div className="govuk-form-group mb-0">
                       <div className="flex justify-between items-end mb-2">
-                        <label className="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0 flex items-center gap-1">
-                          <FileText className="w-4 h-4"/> Notes / Script
+                        <label className="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">
+                          Notes / Script
                         </label>
                         
                         <button
-                          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-font-size-14 govuk-!-padding-1 flex items-center gap-1"
+                          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-font-size-14 govuk-!-padding-1"
                           onClick={() => {
                              if (regeneratingSectionId === section.id) {
                                setRegeneratingSectionId(null);
@@ -914,7 +910,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                           }}
                           disabled={isRegenerating}
                         >
-                          <Sparkles className="w-4 h-4"/> AI Regenerate
+                          AI Regenerate
                         </button>
                       </div>
                       
@@ -979,10 +975,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
         <button 
           onClick={onStart} 
           disabled={sections.length === 0}
-          className="govuk-button govuk-!-margin-bottom-0 w-full max-w-md text-lg py-3 flex justify-center items-center gap-2"
+          className="govuk-button govuk-button--start govuk-!-margin-bottom-0 w-full max-w-md flex justify-center items-center"
         >
-          <Play className="w-6 h-6 fill-current" />
           Start Mock Interview
+          <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false" style={{ marginLeft: '10px' }}>
+            <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+          </svg>
         </button>
         <div className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-800 select-none" onClick={() => setDebugMode(!debugMode)}>
            <div className={`w-3 h-3 rounded-full border ${debugMode ? 'bg-green-500 border-green-600' : 'bg-transparent border-slate-400'}`}></div>
