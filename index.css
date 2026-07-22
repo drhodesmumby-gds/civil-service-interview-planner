@@ -2,15 +2,15 @@
 @import "@ministryofjustice/frontend/moj/moj-frontend.min.css";
 
 html, body {
-  height: 100%;
   margin: 0;
   padding: 0;
+  background-color: #f3f2f1; /* Match GOV.UK standard background */
 }
 
 #root {
-  height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 100vh; /* Allow it to grow, but ensure it takes full screen if empty */
 }
 
 .govuk-main-wrapper {

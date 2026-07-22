@@ -46,12 +46,12 @@ const App: React.FC = () => {
     <>
       {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} />}
       
-      <div className="flex-container">
+      <div className="app-container">
         <Header />
         
-        <div className="govuk-width-container flex-grow flex-container">
+        <div className="govuk-width-container">
           {appState === AppState.SETUP && (
-            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+            <main className="govuk-main-wrapper pb-24" id="main-content" role="main">
               <SetupView 
                 sections={sections} 
                 setSections={setSections} 
@@ -65,7 +65,7 @@ const App: React.FC = () => {
           )}
           
           {appState === AppState.ABOUT && (
-            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+            <main className="govuk-main-wrapper" id="main-content" role="main">
               <AboutView 
                 onBack={() => setAppState(AppState.SETUP)}
               />
@@ -73,7 +73,7 @@ const App: React.FC = () => {
           )}
 
           {appState === AppState.PROMPTS && (
-            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+            <main className="govuk-main-wrapper" id="main-content" role="main">
               <PromptEditorView 
                 onBack={() => setAppState(AppState.SETUP)}
               />
@@ -81,7 +81,7 @@ const App: React.FC = () => {
           )}
           
           {appState === AppState.RUNNING && (
-            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+            <main className="govuk-main-wrapper" id="main-content" role="main">
               <LiveView 
                 sections={sections} 
                 careerHistory={careerHistory}
