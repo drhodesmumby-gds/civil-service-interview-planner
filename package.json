@@ -9,12 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.2.3",
-    "lucide-react": "^0.562.0",
     "@google/genai": "^1.35.0",
-    "react": "^19.2.3",
+    "@ministryofjustice/frontend": "^10.0.1",
+    "@uiw/react-md-editor": "^4.1.1",
+    "govuk-frontend": "^6.4.0",
+    "lucide-react": "^0.562.0",
     "mammoth": "1.8.0",
-    "pdfjs-dist": "3.11.174"
+    "pdfjs-dist": "3.11.174",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

@@ -4,13 +4,28 @@ import { LiveView } from './components/LiveView';
 import { DisclaimerModal } from './components/DisclaimerModal';
 import { AboutView } from './components/AboutView';
 import { PromptEditorView } from './components/PromptEditorView';
-import { AppState, InterviewSection, Theme } from './types';
+import { AppState, InterviewSection } from './types';
+
+const Header: React.FC = () => (
+  <header className="govuk-header" role="banner" data-module="govuk-header">
+    <div className="govuk-header__container govuk-width-container">
+      <div className="govuk-header__logo">
+        <a href="#" className="govuk-header__link govuk-header__link--homepage">
+          <span className="govuk-header__logotype">
+            <span className="govuk-header__logotype-text">
+              Civil Service Interview Companion
+            </span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+);
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.SETUP);
   const [careerHistory, setCareerHistory] = useState<string>('');
   const [showDisclaimer, setShowDisclaimer] = useState(true);
-  const [theme, setTheme] = useState<Theme>('DEFAULT');
 
   const [sections, setSections] = useState<InterviewSection[]>([
     {
@@ -27,59 +42,54 @@ const App: React.FC = () => {
     }
   ]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'DEFAULT' ? 'GDS' : 'DEFAULT');
-  };
-
-  const isGds = theme === 'GDS';
-
   return (
     <>
-      {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} theme={theme} />}
+      {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} />}
       
-      <div className={`h-full ${isGds ? 'bg-[#f3f2f1] text-[#0b0c0c] font-sans' : 'bg-slate-50 text-slate-900 font-sans'} flex flex-col overflow-hidden transition-colors duration-300`}>
-        {appState === AppState.SETUP && (
-          <div className="flex-1 overflow-y-auto">
-            <SetupView 
-              sections={sections} 
-              setSections={setSections} 
-              careerHistory={careerHistory}
-              setCareerHistory={setCareerHistory}
-              onStart={() => setAppState(AppState.RUNNING)}
-              onShowAbout={() => setAppState(AppState.ABOUT)}
-              onShowPrompts={() => setAppState(AppState.PROMPTS)}
-              theme={theme}
-              toggleTheme={toggleTheme}
-            />
-          </div>
-        )}
+      <div className="flex-container">
+        <Header />
         
-        {appState === AppState.ABOUT && (
-          <div className="flex-1 overflow-hidden">
-            <AboutView 
-              onBack={() => setAppState(AppState.SETUP)}
-              theme={theme}
-            />
-          </div>
-        )}
+        <div className="govuk-width-container flex-grow flex-container">
+          {appState === AppState.SETUP && (
+            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+              <SetupView 
+                sections={sections} 
+                setSections={setSections} 
+                careerHistory={careerHistory}
+                setCareerHistory={setCareerHistory}
+                onStart={() => setAppState(AppState.RUNNING)}
+                onShowAbout={() => setAppState(AppState.ABOUT)}
+                onShowPrompts={() => setAppState(AppState.PROMPTS)}
+              />
+            </main>
+          )}
+          
+          {appState === AppState.ABOUT && (
+            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+              <AboutView 
+                onBack={() => setAppState(AppState.SETUP)}
+              />
+            </main>
+          )}
 
-        {appState === AppState.PROMPTS && (
-          <div className="flex-1 overflow-hidden">
-            <PromptEditorView 
-              onBack={() => setAppState(AppState.SETUP)}
-              theme={theme}
-            />
-          </div>
-        )}
-        
-        {appState === AppState.RUNNING && (
-          <LiveView 
-            sections={sections} 
-            careerHistory={careerHistory}
-            onExit={() => setAppState(AppState.SETUP)}
-            theme={theme}
-          />
-        )}
+          {appState === AppState.PROMPTS && (
+            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+              <PromptEditorView 
+                onBack={() => setAppState(AppState.SETUP)}
+              />
+            </main>
+          )}
+          
+          {appState === AppState.RUNNING && (
+            <main className="govuk-main-wrapper flex-grow overflow-y-auto" id="main-content" role="main">
+              <LiveView 
+                sections={sections} 
+                careerHistory={careerHistory}
+                onExit={() => setAppState(AppState.SETUP)}
+              />
+            </main>
+          )}
+        </div>
       </div>
     </>
   );

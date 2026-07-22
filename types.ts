@@ -27,4 +27,3 @@ export enum AppState {
   PROMPTS = 'PROMPTS'
 }
 
-export type Theme = 'DEFAULT' | 'GDS';

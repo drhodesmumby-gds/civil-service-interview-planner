@@ -55,9 +55,9 @@ export const exportAsText = (
 export const exportAsPdf = (
   sections: InterviewSection[], 
   profile: Partial<InterviewProfile> = {},
-  theme: Theme = 'Modern'
+  theme?: Theme
 ) => {
-  const isGds = theme === 'GDS';
+  const isGds = true;
 
   const htmlContent = `
     <!DOCTYPE html>

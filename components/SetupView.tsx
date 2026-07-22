@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import MDEditor from '@uiw/react-md-editor';
 import { Plus, Trash2, Wand2, GripVertical, Play, Clock, FileText, ClipboardPaste, Upload, FileUp, ChevronDown, ChevronUp, X, Briefcase, ScanSearch, Loader2, Bug, Terminal, HelpCircle, Sparkles, MessageSquare, Settings, ToggleLeft, ToggleRight, KeyRound, Download, Printer } from 'lucide-react';
-import { InterviewSection, InterviewProfile, Theme } from '../types';
+import { InterviewSection, InterviewProfile } from '../types';
 import { Button } from './Button';
 import { exportAsText, exportAsPdf } from '../utils/exportUtils';
 import { 
@@ -27,8 +28,6 @@ interface SetupViewProps {
   onStart: () => void;
   onShowAbout: () => void;
   onShowPrompts: () => void;
-  theme: Theme;
-  toggleTheme: () => void;
 }
 
 const CIVIL_SERVICE_GRADES = [
@@ -70,12 +69,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
   setCareerHistory,
   onStart,
   onShowAbout,
-  onShowPrompts,
-  theme,
-  toggleTheme
+  onShowPrompts
 }) => {
-  const isGds = theme === 'GDS';
-  
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isExtractingJob, setIsExtractingJob] = useState(false);
@@ -242,7 +238,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
         // Check if this is the first section to apply the Intro prompt logic
         const index = sections.findIndex(s => s.id === section.id);
         const isFirstSection = index === 0;
-        const selectedTemplate = isFirstSection ? prompts.INTRO : prompts.REGEN;
+        const storedPrompts = getStoredPrompts();
+        const selectedTemplate = isFirstSection ? storedPrompts.INTRO : storedPrompts.REGEN;
 
         const newNotes = await regenerateSectionNotes(section, fullProfile, regenerationFeedback, selectedTemplate);
         updateSection(section.id, { notes: newNotes });
@@ -261,7 +258,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
       if (!jobAdvertText.trim()) return;
       setIsExtractingJob(true);
       try {
-        const details = await extractJobDetails(jobAdvertText, prompts.EXTRACT);
+        const storedPrompts = getStoredPrompts();
+        const details = await extractJobDetails(jobAdvertText, storedPrompts.EXTRACT);
         
         setProfile(prev => {
           const existingBehaviours = new Set(prev.behaviours || []);
@@ -461,100 +459,73 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
   
   // Theme styling helpers
-  const cardClass = isGds 
-    ? "bg-white p-6 border-2 border-[#b1b4b6] space-y-4 rounded-none" 
-    : "bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4";
+  const cardClass = "govuk-!-padding-6 govuk-!-margin-bottom-4" + " border-2 border-[#b1b4b6] space-y-4 bg-white";
   
-  const inputClass = isGds
-    ? "w-full px-4 py-2 border-2 border-[#0b0c0c] focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 bg-white text-[#0b0c0c] rounded-none font-sans"
-    : "w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-900";
+  const inputClass = "govuk-input";
     
-  const textAreaClass = isGds
-    ? "w-full px-4 py-2 border-2 border-[#0b0c0c] focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 bg-white text-[#0b0c0c] rounded-none font-sans"
-    : "w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none resize-none text-sm bg-white text-slate-900";
+  const textAreaClass = "govuk-textarea";
 
   return (
-    <div className={`w-full max-w-7xl mx-auto p-6 space-y-8 pb-48 ${isGds ? 'font-sans text-[#0b0c0c]' : ''}`}>
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="govuk-width-container govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 govuk-!-margin-bottom-6">
         <div className="space-y-2">
-          <h1 className={`text-3xl md:text-4xl font-bold tracking-tight ${isGds ? 'text-[#0b0c0c]' : 'text-slate-900'}`}>Interview Planner</h1>
-          <p className={`${isGds ? 'text-[#505a5f] text-lg' : 'text-slate-500'}`}>Setup your mock interview structure manually, import existing notes, or let Gemini AI build a plan for you.</p>
+          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">Interview Planner</h1>
+          <p className="govuk-body-l text-[#505a5f]">Setup your mock interview structure manually, import existing notes, or let Gemini AI build a plan for you.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button 
             onClick={() => setShowApiKeyModal(true)}
-            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
-              isGds 
-                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] font-bold hover:bg-[#e4e2e0] shadow-[0_2px_0_#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]' 
-                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
-            }`}
+            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
           >
             <KeyRound className="w-5 h-5" />
             API Key
           </button>
           <button 
             onClick={onShowPrompts}
-            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
-              isGds 
-                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] font-bold hover:bg-[#e4e2e0] shadow-[0_2px_0_#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]' 
-                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
-            }`}
+            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
           >
-            <Settings className="w-5 h-5 text-blue-500" />
+            <Settings className="w-5 h-5" />
             Prompt Settings
           </button>
           <button 
             onClick={onShowAbout}
-            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
-              isGds 
-                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] font-bold hover:bg-[#e4e2e0] shadow-[0_2px_0_#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]' 
-                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
-            }`}
+            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
           >
             <HelpCircle className="w-5 h-5" />
             About / Help
-          </button>
-          <button 
-            onClick={toggleTheme}
-            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
-              isGds 
-                ? 'bg-[#00703c] text-white font-bold hover:bg-[#005a30] shadow-[0_2px_0_#002d18] focus:ring-4 focus:ring-[#ffdd00]' 
-                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
-            }`}
-          >
-            {isGds ? <ToggleRight className="w-5 h-5 text-[#ffdd00]" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
-            {isGds ? 'GOV.UK-ish Theme Active' : 'Switch to GOV.UK-ish Theme'}
           </button>
         </div>
       </header>
 
       {/* Context Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="govuk-grid-row">
         
         {/* Job Advert Context */}
-        <div className={`${cardClass} flex flex-col h-full min-h-[300px]`}>
+        <div className="govuk-grid-column-one-half">
+         <div className={cardClass + " flex flex-col h-full min-h-[300px]"}>
            <div className="flex items-center justify-between mb-2">
-             <div className={`flex items-center gap-2 font-semibold ${isGds ? 'text-[#0b0c0c] text-xl' : 'text-violet-600'}`}>
+             <div className="flex items-center gap-2">
                <Briefcase className="w-5 h-5" />
-               <h2>Job Advert Context</h2>
+               <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Job Advert Context</h2>
              </div>
-             {isProcessingFile && <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 className="w-3 h-3 animate-spin"/> Processing...</div>}
+             {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/> Processing...</div>}
            </div>
            
-           <p className={`text-sm ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>Paste job description (PDF/Text) to auto-fill details.</p>
-           <div className="flex-1 flex gap-4 items-start relative">
-             <div className="flex-1 h-full">
+           <p className="govuk-body govuk-!-font-size-16">Paste job description (PDF/Text) to auto-fill details.</p>
+           <div className="flex-1 flex gap-4 items-start relative govuk-!-margin-bottom-2">
+             <div className="govuk-form-group flex-1 h-full mb-0">
                <textarea 
-                 className={`${textAreaClass} h-full`}
+                 className={textAreaClass + " h-full"}
                  placeholder="Paste job advert text here..."
                  value={jobAdvertText}
                  onChange={e => setJobAdvertText(e.target.value)}
                  disabled={isProcessingFile}
+                 rows={5}
                />
              </div>
              <div className="shrink-0 flex flex-col gap-2">
-               <label className={`flex flex-col items-center justify-center w-12 h-12 border transition-colors bg-white ${isGds ? 'border-[#0b0c0c]' : 'border-slate-200 rounded-lg'} ${isProcessingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50'}`} title="Upload File">
-                 {isProcessingFile ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" /> : <Upload className="w-5 h-5 text-slate-400" />}
+               <label className={`flex flex-col items-center justify-center w-12 h-12 border-2 transition-colors bg-white border-[#0b0c0c] ${isProcessingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#f3f2f1]'}`} title="Upload File">
+                 {isProcessingFile ? <Loader2 className="w-5 h-5 animate-spin text-[#505a5f]" /> : <Upload className="w-5 h-5 text-[#0b0c0c]" />}
                  <input 
                    type="file" 
                    className="hidden" 
@@ -562,49 +533,49 @@ export const SetupView: React.FC<SetupViewProps> = ({
                    disabled={isProcessingFile}
                    onChange={(e) => {
                      if(e.target.files?.[0]) handleFileRead(e.target.files[0], setJobAdvertText);
-                     e.target.value = ''; // Reset to allow same file selection again
+                     e.target.value = '';
                    }} 
                  />
                </label>
              </div>
            </div>
-           <Button 
+           <button 
+             className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 w-full flex justify-center items-center gap-2"
              onClick={handleJobAdvertExtract} 
              disabled={!jobAdvertText.trim() || isProcessingFile} 
-             isLoading={isExtractingJob}
-             variant="secondary"
-             className="w-full text-xs"
-             icon={<ScanSearch className="w-4 h-4"/>}
-             theme={theme}
            >
+             {isExtractingJob ? <Loader2 className="w-4 h-4 animate-spin"/> : <ScanSearch className="w-4 h-4"/>}
              Auto-fill from Advert
-           </Button>
+           </button>
+         </div>
         </div>
 
         {/* Career History Context */}
-        <div className={`${cardClass} flex flex-col h-full min-h-[300px]`}>
+        <div className="govuk-grid-column-one-half">
+         <div className={cardClass + " flex flex-col h-full min-h-[300px]"}>
            <div className="flex items-center justify-between mb-2">
-             <div className={`flex items-center gap-2 font-semibold ${isGds ? 'text-[#0b0c0c] text-xl' : 'text-emerald-600'}`}>
+             <div className="flex items-center gap-2">
                <FileUp className="w-5 h-5" />
-               <h2>Career Context</h2>
+               <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Career Context</h2>
              </div>
-             {isProcessingFile && <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 className="w-3 h-3 animate-spin"/> Processing...</div>}
+             {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/> Processing...</div>}
            </div>
 
-           <p className={`text-sm ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>Upload CV/History to generate specific STAR examples.</p>
-           <div className="flex-1 flex gap-4 items-start relative">
-             <div className="flex-1 h-full">
+           <p className="govuk-body govuk-!-font-size-16">Upload CV/History to generate specific STAR examples.</p>
+           <div className="flex-1 flex gap-4 items-start relative govuk-!-margin-bottom-2">
+             <div className="govuk-form-group flex-1 h-full mb-0">
                <textarea 
-                 className={`${textAreaClass} h-full`}
+                 className={textAreaClass + " h-full"}
                  placeholder="Paste career history here..."
                  value={careerHistory}
                  onChange={e => setCareerHistory(e.target.value)}
                  disabled={isProcessingFile}
+                 rows={5}
                />
              </div>
              <div className="shrink-0">
-               <label className={`flex flex-col items-center justify-center w-12 h-12 border transition-colors bg-white ${isGds ? 'border-[#0b0c0c]' : 'border-slate-200 rounded-lg'} ${isProcessingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50'}`} title="Upload File">
-                 {isProcessingFile ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" /> : <Upload className="w-5 h-5 text-slate-400" />}
+               <label className={`flex flex-col items-center justify-center w-12 h-12 border-2 transition-colors bg-white border-[#0b0c0c] ${isProcessingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#f3f2f1]'}`} title="Upload File">
+                 {isProcessingFile ? <Loader2 className="w-5 h-5 animate-spin text-[#505a5f]" /> : <Upload className="w-5 h-5 text-[#0b0c0c]" />}
                  <input 
                    type="file" 
                    className="hidden" 
@@ -612,21 +583,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
                    disabled={isProcessingFile}
                    onChange={(e) => {
                      if(e.target.files?.[0]) handleFileRead(e.target.files[0], setCareerHistory);
-                     e.target.value = ''; // Reset
+                     e.target.value = '';
                    }} 
                  />
                </label>
              </div>
            </div>
+         </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="govuk-grid-row">
         {/* AI Generator Panel */}
-        <div className={`${cardClass} h-full`}>
-          <div className={`flex items-center gap-2 font-semibold mb-2 ${isGds ? 'text-[#0b0c0c] text-xl' : 'text-blue-600'}`}>
+        <div className="govuk-grid-column-one-half">
+         <div className={cardClass + " h-full"}>
+          <div className="flex items-center gap-2 mb-2">
             <Wand2 className="w-5 h-5" />
-            <h2>AI Plan Generator</h2>
+            <h2 className="govuk-heading-m govuk-!-margin-bottom-0">AI Plan Generator</h2>
           </div>
           <div className="space-y-3">
             <input
@@ -713,43 +686,41 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </div>
 
             {/* Known Questions Foldout */}
-            <div className={`overflow-hidden ${isGds ? 'border-2 border-[#0b0c0c]' : 'border border-slate-200 rounded-lg'}`}>
-               <button 
-                 onClick={() => setIsKnownQuestionsOpen(!isKnownQuestionsOpen)}
-                 className={`w-full px-4 py-2 flex justify-between items-center text-sm font-medium transition-colors ${isGds ? 'bg-[#f3f2f1] hover:bg-[#e4e2e0] text-[#0b0c0c]' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
-               >
-                 <span className="flex items-center gap-2"><HelpCircle className={`w-4 h-4 ${isGds ? 'text-[#0b0c0c]' : 'text-indigo-500'}`}/> Known Questions (Optional)</span>
-                 {isKnownQuestionsOpen ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
-               </button>
+            <div className="govuk-details" data-module="govuk-details">
+               <summary className="govuk-details__summary" onClick={() => setIsKnownQuestionsOpen(!isKnownQuestionsOpen)}>
+                 <span className="govuk-details__summary-text">
+                   Known Questions (Optional)
+                 </span>
+               </summary>
                
                {isKnownQuestionsOpen && (
-                 <div className={`p-4 bg-white ${isGds ? 'border-t-2 border-[#0b0c0c]' : 'border-t border-slate-200'}`}>
-                   <p className="text-xs text-slate-500 mb-2">Paste any pre-seen questions here. The generator will prioritise these over generic behavioural questions.</p>
-                   <textarea
-                      className={textAreaClass}
-                      style={{height: '6rem'}}
-                      placeholder="1. Tell us about a time you..."
-                      value={profile.knownQuestions}
-                      onChange={e => setProfile({...profile, knownQuestions: e.target.value})}
-                   />
+                 <div className="govuk-details__text bg-white">
+                   <p className="govuk-body govuk-!-font-size-14 govuk-!-margin-bottom-2 text-[#505a5f]">Paste any pre-seen questions here. The generator will prioritise these over generic behavioural questions.</p>
+                   <div className="govuk-form-group mb-0">
+                     <textarea
+                        className={textAreaClass}
+                        style={{height: '6rem'}}
+                        placeholder="1. Tell us about a time you..."
+                        value={profile.knownQuestions}
+                        onChange={e => setProfile({...profile, knownQuestions: e.target.value})}
+                     />
+                   </div>
                  </div>
                )}
             </div>
 
             {/* Advanced Options Foldout */}
-            <div className={`overflow-hidden ${isGds ? 'border-2 border-[#0b0c0c]' : 'border border-slate-200 rounded-lg'}`}>
-               <button 
-                 onClick={() => setIsBehavioursOpen(!isBehavioursOpen)}
-                 className={`w-full px-4 py-2 flex justify-between items-center text-sm font-medium transition-colors ${isGds ? 'bg-[#f3f2f1] hover:bg-[#e4e2e0] text-[#0b0c0c]' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
-               >
-                 <span>Behaviours & Competencies</span>
-                 {isBehavioursOpen ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
-               </button>
+            <div className="govuk-details" data-module="govuk-details">
+               <summary className="govuk-details__summary" onClick={() => setIsBehavioursOpen(!isBehavioursOpen)}>
+                 <span className="govuk-details__summary-text">
+                   Behaviours & Competencies
+                 </span>
+               </summary>
                
                {isBehavioursOpen && (
-                 <div className={`p-4 bg-white space-y-4 ${isGds ? 'border-t-2 border-[#0b0c0c]' : 'border-t border-slate-200'}`}>
-                   <div>
-                     <span className={`text-xs font-semibold uppercase block mb-2 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>Technical Competencies</span>
+                 <div className="govuk-details__text bg-white space-y-4">
+                   <div className="govuk-form-group mb-0">
+                     <label className="govuk-label govuk-!-font-weight-bold">Technical Competencies</label>
                      <textarea
                         className={textAreaClass}
                         style={{height: '5rem'}}
@@ -759,19 +730,22 @@ export const SetupView: React.FC<SetupViewProps> = ({
                      />
                    </div>
 
-                   <div>
-                     <span className={`text-xs font-semibold uppercase block mb-2 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>Behaviours (Select 3-4)</span>
-                     <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                   <div className="govuk-form-group mb-0">
+                     <label className="govuk-label govuk-!-font-weight-bold">Behaviours (Select 3-4)</label>
+                     <div className="govuk-checkboxes govuk-checkboxes--small max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                        {CIVIL_SERVICE_BEHAVIOURS.map(behaviour => (
-                         <label key={behaviour} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:text-slate-900">
+                         <div key={behaviour} className="govuk-checkboxes__item">
                            <input 
                              type="checkbox"
                              checked={profile.behaviours?.includes(behaviour)}
                              onChange={() => toggleBehaviour(behaviour)}
-                             className={`rounded ${isGds ? 'border-2 border-[#0b0c0c] text-[#0b0c0c] focus:ring-[#ffdd00]' : 'border-slate-300 text-blue-600 focus:ring-blue-500'}`}
+                             className="govuk-checkboxes__input"
+                             id={`behaviour-${behaviour}`}
                            />
-                           {behaviour}
-                         </label>
+                           <label className="govuk-label govuk-checkboxes__label" htmlFor={`behaviour-${behaviour}`}>
+                             {behaviour}
+                           </label>
+                         </div>
                        ))}
                      </div>
                    </div>
@@ -779,23 +753,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
                )}
             </div>
 
-            <Button 
+            <button 
               onClick={handleGenerate} 
               disabled={!profile.role || !profile.grade}
-              isLoading={isGenerating}
-              className="w-full"
-              theme={theme}
+              className="govuk-button w-full"
             >
               Generate Interview Plan
-            </Button>
+            </button>
           </div>
+         </div>
         </div>
 
         {/* Import Panel */}
-        <div className={`${cardClass} h-full`}>
-          <div className={`flex items-center gap-2 font-semibold mb-2 ${isGds ? 'text-[#0b0c0c] text-xl' : 'text-indigo-600'}`}>
+        <div className="govuk-grid-column-one-half">
+         <div className={cardClass + " h-full"}>
+          <div className="flex items-center gap-2 mb-2">
             <ClipboardPaste className="w-5 h-5" />
-            <h2>Import from Text</h2>
+            <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Import from Text</h2>
           </div>
           <div className="space-y-3 flex flex-col h-[calc(100%-2rem)]">
             <textarea 
@@ -808,48 +782,41 @@ export const SetupView: React.FC<SetupViewProps> = ({
               onClick={handleImport} 
               disabled={!importText.trim()}
               isLoading={isImporting}
-              className={`w-full ${isGds ? '' : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'}`}
-              theme={theme}
-              variant={isGds ? 'primary' : 'primary'} // Override for non-GDS specific color logic inside Button component
+              className="govuk-button govuk-button--secondary w-full"
             >
               Parse & Import Text
             </Button>
           </div>
+         </div>
         </div>
       </div>
 
       {/* Section List */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className={`text-xl font-semibold ${isGds ? 'text-[#0b0c0c]' : 'text-slate-800'}`}>Interview Sections</h2>
+      <div className="govuk-!-margin-top-8 space-y-4">
+        <div className="flex justify-between items-center govuk-!-margin-bottom-4">
+          <h2 className="govuk-heading-l govuk-!-margin-bottom-0">Interview Sections</h2>
           <div className="flex items-center gap-2 relative">
             {sections.length > 0 && (
               <div className="relative">
-                <Button 
+                <button 
                   onClick={() => setShowExportMenu(!showExportMenu)} 
-                  variant="outline" 
-                  icon={<Download className="w-4 h-4"/>} 
-                  theme={theme}
-                  className="text-xs"
+                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-1"
                 >
+                  <Download className="w-4 h-4"/>
                   Export Notes
                   <ChevronDown className="w-3 h-3 ml-1" />
-                </Button>
+                </button>
 
                 {showExportMenu && (
-                  <div className={`absolute right-0 mt-2 w-56 rounded-lg shadow-xl z-30 p-2 space-y-1 ${
-                    isGds ? 'bg-white border-2 border-[#0b0c0c]' : 'bg-white border border-slate-200'
-                  }`}>
+                  <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-[#0b0c0c] z-30 p-2 space-y-1 shadow-xl">
                     <button
                       onClick={() => {
-                        exportAsPdf(sections, profile, theme);
+                        exportAsPdf(sections, profile);
                         setShowExportMenu(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded transition-colors text-left ${
-                        isGds ? 'hover:bg-[#f3f2f1] text-[#0b0c0c]' : 'hover:bg-slate-100 text-slate-700'
-                      }`}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors text-left hover:bg-[#f3f2f1] text-[#0b0c0c]"
                     >
-                      <Printer className="w-4 h-4 text-blue-600" />
+                      <Printer className="w-4 h-4 text-[#1d70b8]" />
                       <span>Export as PDF / Printable</span>
                     </button>
 
@@ -858,11 +825,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         exportAsText(sections, profile);
                         setShowExportMenu(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded transition-colors text-left ${
-                        isGds ? 'hover:bg-[#f3f2f1] text-[#0b0c0c]' : 'hover:bg-slate-100 text-slate-700'
-                      }`}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors text-left hover:bg-[#f3f2f1] text-[#0b0c0c]"
                     >
-                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <FileText className="w-4 h-4 text-[#00703c]" />
                       <span>Export as Text File (.txt)</span>
                     </button>
                   </div>
@@ -870,76 +835,75 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </div>
             )}
 
-            <Button onClick={addSection} variant="secondary" icon={<Plus className="w-4 h-4"/>} theme={theme}>
+            <button onClick={addSection} className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-1">
+              <Plus className="w-4 h-4"/>
               Add Section
-            </Button>
+            </button>
           </div>
         </div>
 
         {sections.length === 0 ? (
-          <div className={`text-center py-12 border-2 border-dashed rounded-xl ${isGds ? 'border-[#b1b4b6] text-[#505a5f]' : 'border-slate-200 text-slate-400'}`}>
+          <div className="text-center py-12 border-2 border-dashed border-[#b1b4b6] text-[#505a5f]">
             <p>No sections added yet. Generate a plan, import text, or add manually.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {sections.map((section, index) => (
-              <div key={section.id} className={`${isGds ? 'bg-white p-4 border-l-4 border-[#1d70b8] border-y border-r border-y-[#b1b4b6] border-r-[#b1b4b6]' : 'bg-white rounded-xl shadow-sm border border-slate-200 p-4 transition-shadow hover:shadow-md'} group`}>
+              <div key={section.id} className="bg-white p-4 border-l-4 border-[#1d70b8] border-y border-r border-y-[#b1b4b6] border-r-[#b1b4b6] group">
                 <div className="flex items-start gap-4">
-                  <div className="flex flex-col gap-1 pt-2 text-slate-300">
-                    <button onClick={() => moveSection(index, 'up')} className="hover:text-blue-500 disabled:opacity-30" disabled={index===0}>▲</button>
+                  <div className="flex flex-col gap-1 pt-2 text-[#505a5f]">
+                    <button onClick={() => moveSection(index, 'up')} className="hover:text-[#1d70b8] disabled:opacity-30" disabled={index===0}>▲</button>
                     <GripVertical className="w-5 h-5 cursor-grab active:cursor-grabbing" />
-                    <button onClick={() => moveSection(index, 'down')} className="hover:text-blue-500 disabled:opacity-30" disabled={index===sections.length-1}>▼</button>
+                    <button onClick={() => moveSection(index, 'down')} className="hover:text-[#1d70b8] disabled:opacity-30" disabled={index===sections.length-1}>▼</button>
                   </div>
                   
                   <div className="flex-1 space-y-4">
                     <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className={`block text-xs font-semibold uppercase mb-1 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>Section Title</label>
+                      <div className="flex-1 govuk-form-group mb-0">
+                        <label className="govuk-label govuk-!-font-weight-bold">Section Title</label>
                         <input
                           type="text"
                           value={section.title}
                           onChange={(e) => updateSection(section.id, { title: e.target.value })}
-                          className={`w-full font-semibold text-lg border-b focus:outline-none pb-1 bg-transparent ${isGds ? 'border-[#0b0c0c] text-[#0b0c0c] focus:border-[#ffdd00] focus:border-b-4' : 'border-slate-200 focus:border-blue-500 text-slate-900'}`}
+                          className="govuk-input"
                           placeholder="e.g., Leadership Behaviour"
                         />
                       </div>
-                      <div className="w-32">
-                        <label className={`block text-xs font-semibold uppercase mb-1 flex items-center gap-1 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>
-                          <Clock className="w-3 h-3"/> Mins
+                      <div className="w-32 govuk-form-group mb-0">
+                        <label className="govuk-label govuk-!-font-weight-bold flex items-center gap-1">
+                          <Clock className="w-4 h-4"/> Mins
                         </label>
                         <input
                           type="number"
                           value={section.durationMinutes}
                           onChange={(e) => updateSection(section.id, { durationMinutes: Number(e.target.value) })}
-                          className={`w-full font-mono text-lg border-b focus:outline-none pb-1 bg-transparent ${isGds ? 'border-[#0b0c0c] text-[#0b0c0c] focus:border-[#ffdd00] focus:border-b-4' : 'border-slate-200 focus:border-blue-500 text-slate-900'}`}
+                          className="govuk-input"
                           min="1"
                         />
                       </div>
                     </div>
                     
-                    <div>
-                        <label className={`block text-xs font-semibold uppercase mb-1 flex items-center gap-1 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>
-                          <HelpCircle className="w-3 h-3"/> Question Text (Optional)
+                    <div className="govuk-form-group mb-0">
+                        <label className="govuk-label govuk-!-font-weight-bold flex items-center gap-1">
+                          <HelpCircle className="w-4 h-4"/> Question Text (Optional)
                         </label>
                         <input
                           type="text"
                           value={section.questionText || ''}
                           onChange={(e) => updateSection(section.id, { questionText: e.target.value })}
-                          className={`w-full border-b focus:outline-none pb-2 text-sm ${isGds ? 'bg-[#f3f2f1] text-[#0b0c0c] border-[#b1b4b6] focus:border-[#ffdd00] focus:border-b-4 p-2' : 'text-slate-700 bg-slate-50 border-slate-200 focus:border-blue-500'}`}
+                          className="govuk-input"
                           placeholder="e.g. 'Tell me about a time you had to deliver a difficult message...'"
                         />
                     </div>
 
-                    <div className="relative">
-                      <div className="flex justify-between items-end mb-1">
-                        <label className={`block text-xs font-semibold uppercase flex items-center gap-1 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>
-                          <FileText className="w-3 h-3"/> Notes / Script
+                    <div className="govuk-form-group mb-0">
+                      <div className="flex justify-between items-end mb-2">
+                        <label className="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0 flex items-center gap-1">
+                          <FileText className="w-4 h-4"/> Notes / Script
                         </label>
                         
-                        <Button
-                          variant="ghost"
-                          className="text-xs h-6 px-2"
-                          icon={<Sparkles className="w-3 h-3"/>}
+                        <button
+                          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-font-size-14 govuk-!-padding-1 flex items-center gap-1"
                           onClick={() => {
                              if (regeneratingSectionId === section.id) {
                                setRegeneratingSectionId(null);
@@ -949,58 +913,57 @@ export const SetupView: React.FC<SetupViewProps> = ({
                              }
                           }}
                           disabled={isRegenerating}
-                          theme={theme}
                         >
-                          AI Regenerate
-                        </Button>
+                          <Sparkles className="w-4 h-4"/> AI Regenerate
+                        </button>
                       </div>
                       
                       {regeneratingSectionId === section.id && (
-                        <div className={`mb-3 p-3 animate-in fade-in slide-in-from-top-1 ${isGds ? 'bg-[#f3f2f1] border-l-4 border-[#1d70b8]' : 'bg-indigo-50 border border-indigo-100 rounded-lg'}`}>
+                        <div className="mb-4 p-4 bg-[#f3f2f1] border-l-4 border-[#1d70b8]">
                            <div className="flex flex-col gap-2">
-                             <label className={`text-xs font-medium ${isGds ? 'text-[#0b0c0c]' : 'text-indigo-800'}`}>Instructions for AI (e.g. "Focus more on the result", "Use a different example"):</label>
+                             <label className="govuk-label govuk-!-font-size-16">Instructions for AI (e.g. "Focus more on the result", "Use a different example"):</label>
                              <textarea 
-                               className={`${textAreaClass} text-sm`}
+                               className="govuk-textarea"
                                rows={2}
                                placeholder="Make it punchier..."
                                value={regenerationFeedback}
                                onChange={e => setRegenerationFeedback(e.target.value)}
                              />
-                             <div className="flex justify-end gap-2">
-                               <Button 
-                                 variant="secondary" 
-                                 className="text-xs h-8" 
+                             <div className="flex gap-2">
+                               <button 
+                                 className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
                                  onClick={() => setRegeneratingSectionId(null)}
-                                 theme={theme}
                                >
                                  Cancel
-                               </Button>
-                               <Button 
-                                 variant="primary" 
-                                 className={`text-xs h-8 ${isGds ? '' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                               </button>
+                               <button 
+                                 className="govuk-button govuk-!-margin-bottom-0"
                                  onClick={() => handleRegenerateSection(section)}
-                                 isLoading={isRegenerating}
-                                 theme={theme}
+                                 disabled={isRegenerating}
                                >
                                  Generate New Notes
-                               </Button>
+                               </button>
                              </div>
                            </div>
                         </div>
                       )}
 
-                      <textarea
-                        value={section.notes}
-                        onChange={(e) => updateSection(section.id, { notes: e.target.value })}
-                        className={`w-full h-32 resize-y text-sm leading-relaxed ${isGds ? 'bg-white text-[#0b0c0c] border-2 border-[#b1b4b6] p-2 focus:outline-none focus:ring-4 focus:ring-[#ffdd00]' : 'text-slate-700 bg-slate-50 rounded-lg p-3 border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none'}`}
-                        placeholder="STARR bullet points..."
-                      />
+                      <div data-color-mode="light" className="govuk-!-margin-bottom-2">
+                        <MDEditor
+                          value={section.notes}
+                          onChange={(val) => updateSection(section.id, { notes: val || '' })}
+                          preview="edit"
+                          hideToolbar={false}
+                          height={250}
+                          className="border border-[#b1b4b6]"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <button 
                     onClick={() => removeSection(section.id)}
-                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-[#d4351c] hover:bg-[#f3f2f1] transition-colors"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -1012,16 +975,15 @@ export const SetupView: React.FC<SetupViewProps> = ({
       </div>
 
       {/* Floating Action Bar */}
-      <div className={`fixed bottom-0 left-0 right-0 p-4 backdrop-blur-md border-t flex flex-col gap-2 items-center justify-center z-50 ${isGds ? 'bg-[#f3f2f1]/90 border-[#b1b4b6]' : 'bg-white/80 border-slate-200'}`}>
-        <Button 
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#f3f2f1] border-t-2 border-[#b1b4b6] flex flex-col gap-2 items-center justify-center z-50">
+        <button 
           onClick={onStart} 
           disabled={sections.length === 0}
-          className="w-full max-w-md shadow-xl text-lg py-3"
-          icon={<Play className="w-5 h-5 fill-current" />}
-          theme={theme}
+          className="govuk-button govuk-!-margin-bottom-0 w-full max-w-md text-lg py-3 flex justify-center items-center gap-2"
         >
+          <Play className="w-6 h-6 fill-current" />
           Start Mock Interview
-        </Button>
+        </button>
         <div className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-800 select-none" onClick={() => setDebugMode(!debugMode)}>
            <div className={`w-3 h-3 rounded-full border ${debugMode ? 'bg-green-500 border-green-600' : 'bg-transparent border-slate-400'}`}></div>
            Debug & Settings
@@ -1101,7 +1063,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
             setPendingAction(null);
           }}
           onSave={handleApiKeySave}
-          theme={theme}
         />
       )}
     </div>

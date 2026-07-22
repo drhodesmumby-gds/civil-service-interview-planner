@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { KeyRound, X, Cpu } from 'lucide-react';
 import { Button } from './Button';
-import { Theme } from '../types';
 import { AVAILABLE_MODELS, getSelectedModel, setSelectedModel, getApiKey } from '../services/geminiService';
 
 interface ApiKeyModalProps {
   onClose: () => void;
   onSave: (key: string) => void;
-  theme: Theme;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onClose, onSave, theme }) => {
+export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onClose, onSave }) => {
   const [apiKey, setApiKey] = useState(() => getApiKey() || '');
   const [model, setModel] = useState<string>(() => getSelectedModel());
-  const isGds = theme === 'GDS';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,42 +23,35 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onClose, onSave, theme
     }
   };
 
-  const handleClearKey = () => {
-    setApiKey('');
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className={`w-full max-w-md shadow-2xl p-6 ${isGds ? 'bg-white border-2 border-[#0b0c0c] rounded-none border-t-8 border-t-[#1d70b8]' : 'bg-white rounded-xl'}`}>
-        <div className="flex justify-between items-start mb-6">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="moj-modal-dialogue w-full max-w-lg bg-white p-6 border-4 border-[#0b0c0c]">
+        <div className="flex justify-between items-start mb-6 pb-3 border-b-2 border-[#b1b4b6]">
           <div className="flex items-center gap-3">
-            <div className={`p-2 ${isGds ? 'bg-[#0b0c0c] text-white' : 'bg-blue-100 text-blue-600 rounded-lg'}`}>
+            <div className="p-2 bg-[#0b0c0c] text-white">
               <KeyRound className="w-6 h-6" />
             </div>
             <div>
-              <h2 className={`text-xl font-bold ${isGds ? 'text-[#0b0c0c]' : 'text-slate-900'}`}>API Key & Model Settings</h2>
-              <p className={`text-sm ${isGds ? 'text-[#505a5f]' : 'text-slate-500'}`}>Configure Gemini AI parameters</p>
+              <h2 className="govuk-heading-m mb-0 text-[#0b0c0c]">API Key & Model Settings</h2>
+              <p className="govuk-hint mb-0">Configure Gemini AI parameters</p>
             </div>
           </div>
-          <button onClick={onClose} className={`p-1 text-slate-400 hover:text-slate-600 ${isGds ? 'hover:bg-[#f3f2f1]' : 'rounded-lg hover:bg-slate-100'}`}>
-            <X className="w-5 h-5" />
+          <button onClick={onClose} aria-label="Close modal" className="p-1 text-[#0b0c0c] hover:bg-[#f3f2f1]">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Model Selection */}
-          <div className="space-y-2">
-            <label className={`block text-sm font-semibold flex items-center gap-2 ${isGds ? 'text-[#0b0c0c] font-bold' : 'text-slate-700'}`}>
-              <Cpu className={`w-4 h-4 ${isGds ? 'text-[#1d70b8]' : 'text-blue-500'}`} /> Select Gemini Model
+          <div className="govuk-form-group mb-4">
+            <label className="govuk-label font-bold flex items-center gap-2" htmlFor="model-select">
+              <Cpu className="w-4 h-4 text-[#1d70b8]" /> Select Gemini Model
             </label>
             <select
+              id="model-select"
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className={`w-full px-4 py-3 text-sm transition-all outline-none font-medium ${
-                isGds 
-                  ? 'border-2 border-[#0b0c0c] focus:border-[#0b0c0c] focus:ring-4 focus:ring-[#ffdd00] bg-white text-[#0b0c0c] rounded-none font-bold' 
-                  : 'border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg'
-              }`}
+              className="govuk-select w-full"
             >
               {AVAILABLE_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -69,46 +59,40 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onClose, onSave, theme
                 </option>
               ))}
             </select>
-            <p className={`text-xs ${isGds ? 'text-[#505a5f]' : 'text-slate-500'}`}>
+            <div className="govuk-hint mt-1 text-xs">
               Choose <strong>gemini-3.6-flash</strong> for fast response times or <strong>gemini-3.1-pro-preview</strong> for more complex reasoning.
-            </p>
+            </div>
           </div>
 
           {/* API Key Input */}
-          <div className="space-y-2">
-            <label className={`block text-sm font-semibold ${isGds ? 'text-[#0b0c0c] font-bold' : 'text-slate-700'}`}>
+          <div className="govuk-form-group mb-4">
+            <label className="govuk-label font-bold" htmlFor="api-key-input">
               Gemini API Key
             </label>
             <input
+              id="api-key-input"
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="AIzaSy..."
-              className={`w-full px-4 py-3 text-sm transition-all outline-none ${
-                isGds 
-                  ? 'border-2 border-[#0b0c0c] focus:border-[#0b0c0c] focus:ring-4 focus:ring-[#ffdd00] bg-white text-[#0b0c0c] rounded-none' 
-                  : 'border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg'
-              }`}
+              className="govuk-input w-full"
             />
-            <p className={`text-xs ${isGds ? 'text-[#505a5f]' : 'text-slate-500'}`}>
-              Held in application memory while open (reset when tab reloads or closes) and sent directly to Google Gemini API endpoints. Obtain a key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className={isGds ? 'text-[#1d70b8] underline font-bold hover:text-[#003078]' : 'text-blue-500 hover:underline'}>Google AI Studio</a>.
-            </p>
+            <div className="govuk-hint mt-1 text-xs">
+              Held in application memory while open (reset when tab reloads or closes) and sent directly to Google Gemini API endpoints. Obtain a key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="govuk-link">Google AI Studio</a>.
+            </div>
           </div>
 
-          <div className={`flex justify-end gap-3 pt-4 ${isGds ? 'border-t-2 border-[#b1b4b6]' : 'border-t border-slate-100'}`}>
+          <div className="flex justify-end gap-3 pt-4 border-t-2 border-[#b1b4b6]">
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                isGds ? 'text-[#1d70b8] underline font-bold hover:text-[#003078]' : 'text-slate-600 hover:bg-slate-100 rounded-lg'
-              }`}
+              className="govuk-button govuk-button--secondary mb-0"
             >
               Cancel
             </button>
             <Button
               type="submit"
               variant="primary"
-              theme={theme}
             >
               Save Settings
             </Button>

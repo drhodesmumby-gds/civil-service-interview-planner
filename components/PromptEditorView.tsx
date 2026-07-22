@@ -15,7 +15,7 @@ import {
   FileText,
   Info
 } from 'lucide-react';
-import { Theme } from '../types';
+import MDEditor from '@uiw/react-md-editor';
 import { 
   PromptType, 
   PromptTemplates, 
@@ -30,7 +30,6 @@ import {
 
 interface PromptEditorViewProps {
   onBack: () => void;
-  theme: Theme;
 }
 
 interface PromptTabInfo {
@@ -116,8 +115,7 @@ const PROMPT_TABS: PromptTabInfo[] = [
   }
 ];
 
-export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, theme }) => {
-  const isGds = theme === 'GDS';
+export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack }) => {
   const [prompts, setPrompts] = useState<PromptTemplates>(getStoredPrompts());
   const [activeTab, setActiveTab] = useState<PromptType>('PLAN');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -210,27 +208,21 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
   const isDefaultPrompt = prompts[activeTab] === DEFAULT_PROMPTS[activeTab];
 
   return (
-    <div className={`h-full flex flex-col ${isGds ? 'bg-[#f3f2f1] font-sans text-[#0b0c0c]' : 'bg-slate-900 text-slate-100 font-sans'}`}>
+    <div className="h-full flex flex-col bg-[#f3f2f1] font-sans text-[#0b0c0c]">
       
       {/* Sticky Header */}
-      <header className={`px-6 py-4 flex items-center justify-between shadow-md z-20 shrink-0 border-b ${
-        isGds ? 'bg-white border-b-2 border-[#0b0c0c]' : 'bg-slate-800 border-slate-700'
-      }`}>
+      <header className="px-6 py-4 flex items-center justify-between shadow-md z-20 shrink-0 border-b-2 border-[#0b0c0c] bg-white">
         <div className="flex items-center gap-4">
           <button 
             onClick={onBack}
-            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-              isGds 
-                ? 'text-[#0b0c0c] hover:text-[#1d70b8] font-bold' 
-                : 'text-slate-300 hover:text-white'
-            }`}
+            className="flex items-center gap-2 text-sm transition-colors text-[#0b0c0c] hover:text-[#1d70b8] font-bold"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Planner
           </button>
           <div className="h-5 w-px bg-slate-600"></div>
           <div>
-            <h1 className={`text-xl font-bold flex items-center gap-2 ${isGds ? 'text-[#0b0c0c]' : 'text-white'}`}>
+            <h1 className="text-xl font-bold flex items-center gap-2 text-[#0b0c0c]">
               <FileText className="w-5 h-5 text-blue-400" />
               Prompt Editor
             </h1>
@@ -252,11 +244,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
 
           <button
             onClick={handleExport}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-              isGds
-                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] hover:bg-[#e4e2e0]'
-                : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border border-slate-600'
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] hover:bg-[#e4e2e0]"
             title="Export all prompts to a JSON file"
           >
             <Download className="w-3.5 h-3.5" />
@@ -273,11 +261,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-              isGds
-                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] hover:bg-[#e4e2e0]'
-                : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border border-slate-600'
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] hover:bg-[#e4e2e0]"
             title="Import prompts from a JSON backup file"
           >
             <Upload className="w-3.5 h-3.5" />
@@ -299,9 +283,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
       <div className="flex-1 flex overflow-hidden">
 
         {/* Left Navigation Sidebar / Tabs */}
-        <div className={`w-72 border-r shrink-0 flex flex-col p-4 space-y-2 overflow-y-auto ${
-          isGds ? 'bg-white border-[#b1b4b6]' : 'bg-slate-800/60 border-slate-700'
-        }`}>
+        <div className="w-72 border-r shrink-0 flex flex-col p-4 space-y-2 overflow-y-auto bg-white border-[#b1b4b6]">
           <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 px-2">
             Prompt Templates
           </div>
@@ -314,12 +296,8 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
                 onClick={() => setActiveTab(tab.type)}
                 className={`w-full text-left p-3 rounded-lg flex items-start gap-3 transition-all ${
                   isActive
-                    ? isGds 
                       ? 'bg-[#0b0c0c] text-white font-bold shadow-md'
-                      : 'bg-blue-600 text-white font-semibold shadow-md'
-                    : isGds
-                      ? 'bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#e4e2e0] border border-[#b1b4b6]'
-                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/80 border border-slate-700/50'
+                      : 'bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#e4e2e0] border border-[#b1b4b6]'
                 }`}
               >
                 <div className={`mt-0.5 p-1.5 rounded ${isActive ? 'bg-white/20' : 'bg-slate-700/40'}`}>
@@ -346,9 +324,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
         </div>
 
         {/* Right Editor Area */}
-        <div className={`flex-1 flex flex-col p-6 overflow-y-auto space-y-4 ${
-          isGds ? 'bg-[#f3f2f1]' : 'bg-slate-900'
-        }`}>
+        <div className="flex-1 flex flex-col p-6 overflow-y-auto space-y-4 bg-[#f3f2f1]">
 
           {/* Notification Toast */}
           {notification && (
@@ -365,19 +341,17 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
           )}
 
           {/* Prompt Header & Info */}
-          <div className={`p-4 rounded-xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
-            isGds ? 'bg-white border-[#0b0c0c]' : 'bg-slate-800/80 border-slate-700'
-          }`}>
+          <div className="p-4 rounded-xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border-[#0b0c0c]">
             <div>
               <div className="flex items-center gap-2">
                 <span className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
                   {currentTabInfo.icon}
                 </span>
                 <div>
-                  <h2 className={`text-lg font-bold ${isGds ? 'text-[#0b0c0c]' : 'text-white'}`}>
+                  <h2 className="text-lg font-bold text-[#0b0c0c]">
                     {currentTabInfo.label}
                   </h2>
-                  <p className={`text-xs ${isGds ? 'text-[#505a5f]' : 'text-slate-400'}`}>
+                  <p className="text-xs text-[#505a5f]">
                     {currentTabInfo.shortDescription}
                   </p>
                 </div>
@@ -406,9 +380,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
           </div>
 
           {/* Placeholders Card */}
-          <div className={`p-4 rounded-xl border space-y-2 ${
-            isGds ? 'bg-white border-[#b1b4b6]' : 'bg-slate-800/40 border-slate-700/60'
-          }`}>
+          <div className="p-4 rounded-xl border space-y-2 bg-white border-[#b1b4b6]">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
               <Info className="w-4 h-4 text-blue-400" />
               <span>Supported Placeholders (Click a tag to insert into template):</span>
@@ -421,9 +393,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
                   className={`group relative text-xs font-mono px-2.5 py-1 rounded-md border transition-all flex items-center gap-1.5 ${
                     copiedTag === p.tag
                       ? 'bg-emerald-600 text-white border-emerald-500'
-                      : isGds
-                        ? 'bg-[#f3f2f1] text-[#0b0c0c] border-[#0b0c0c] hover:bg-[#ffdd00]'
-                        : 'bg-slate-800 text-blue-300 border-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-500'
+                      : 'bg-[#f3f2f1] text-[#0b0c0c] border-[#0b0c0c] hover:bg-[#ffdd00]'
                   }`}
                   title={`Insert ${p.tag} - ${p.description}`}
                 >
@@ -434,24 +404,20 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack, them
             </div>
           </div>
 
-          {/* Text Editor Container */}
+          {/* Text Editor Container with Markdown Editor styled to match GDS */}
           <div className="flex-1 flex flex-col min-h-[400px]">
-            <div className="flex justify-between items-center px-1 pb-2 text-xs font-mono text-slate-400">
-              <span>Template Content</span>
+            <div className="flex justify-between items-center px-1 pb-2 text-xs font-mono text-[#505a5f]">
+              <span>Template Content (Markdown Editor)</span>
               <span>{prompts[activeTab].length} characters | {prompts[activeTab].split('\n').length} lines</span>
             </div>
-            <textarea
-              ref={textareaRef}
-              value={prompts[activeTab]}
-              onChange={(e) => handlePromptChange(e.target.value)}
-              spellCheck={false}
-              className={`flex-1 w-full font-mono text-xs p-4 rounded-xl border outline-none resize-none leading-relaxed transition-all ${
-                isGds
-                  ? 'bg-white text-[#0b0c0c] border-2 border-[#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]'
-                  : 'bg-slate-950 text-slate-200 border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-              }`}
-              placeholder="Enter custom prompt template here..."
-            />
+            <div className="border-4 border-[#0b0c0c] bg-white overflow-hidden" data-color-mode="light">
+              <MDEditor
+                value={prompts[activeTab]}
+                onChange={(val) => handlePromptChange(val || '')}
+                height={450}
+                preview="live"
+              />
+            </div>
           </div>
 
         </div>

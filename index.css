@@ -1,0 +1,47 @@
+@import "govuk-frontend/dist/govuk/govuk-frontend.min.css";
+@import "@ministryofjustice/frontend/moj/moj-frontend.min.css";
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.govuk-main-wrapper {
+  flex-grow: 1;
+}
+
+/* Custom layout fixes for the app */
+.flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+/* Specific utilities if we drop tailwind entirely */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.h-full { height: 100%; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.w-full { width: 100%; }
