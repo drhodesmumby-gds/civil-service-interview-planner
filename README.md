@@ -6,6 +6,13 @@ A structured preparation and practice application designed to help candidates pr
 > - **Mock & Practice Use Only**: This application is strictly intended for interview preparation, note structuring, and practice mock runs *prior* to an interview. Using live prompters or timing tools during an actual Civil Service interview may breach assessment rules.
 > - **Data Privacy**: Do not paste or upload classified, sensitive, or personal government/departmental data into the app.
 
+## Personal Note
+I vibed this sometime in late 2025 to assist in preparing for a lengthy round of interviews, in which I always struggled on timing my questions in particular. I always meant to make it public but never quite got round to it, and now feel slightly guilted into it by the recent announcement that [Success Profiles are being scrapped](https://www.civilserviceworld.com/professions/article/civil-service-success-profiles-to-be-scrapped). I say guilted - there is a genuine feeling there, as I did genuinely actually find the tool very useful for my prep as a neurodiverse candidate, and I do wonder if it could have been more helpful for others using Success Profiles.
+
+With that said, the generative AI functionality (the bit most pertinent to Success Profiles) I think is mostly not all that interesting or hugely effective. The prompts are not amazingly well-defined, particularly missing the actual Behaviours criteria (easily added with some effort, but I was never as interested in that aspect with this tool) and, at least when I was last doing this, even Gemini 3 Pro - then cutting edge - struggled with developing truly good material even with the context of my full career history. There are far better tools and prompts out there to support the actual drafting of your preparation material.
+
+Some of the feature ideas did inform a much more interesting AI tutoring project I undertook a little later however, which I intend to make public soon.
+
 ---
 
 ## 🌟 Key Features
@@ -15,7 +22,7 @@ A structured preparation and practice application designed to help candidates pr
 - ⏱️ **Mock Interview Runner & Auto-Scroll Guide**: Practice delivering answers within target timeframes (e.g., 5-minute behaviour blocks) with smooth visual pacing.
 - ❓ **Follow-Up Question Predictor**: Generate realistic panel follow-up questions based on your specific notes to test your preparation on the spot.
 - 📄 **Document Import**: Import job descriptions, personal statements, or existing notes from PDF and Word (`.docx`) files.
-- 🏛️ **GDS / GOV.UK Theme Toggle**: Switch between a clean modern theme and an authentic GOV.UK Design System (GDS) aesthetic.
+- 🏛️ **GDS / GOV.UK Theme Toggle**: Switch between a clean modern theme and a pseudo GOV.UK Design System aesthetic.
 
 ---
 
@@ -68,22 +75,6 @@ A structured preparation and practice application designed to help candidates pr
    ```bash
    npm run build
    ```
-
----
-
-## 🌍 Deployment to GitHub Pages
-
-Since the app now handles the Gemini API key client-side (via the in-app modal), it is a 100% static Single Page Application (SPA). It can be hosted entirely for free on GitHub Pages.
-
-A GitHub Actions workflow (`.github/workflows/deploy.yml`) is already included in this repository.
-
-**To deploy:**
-1. Push your code to the `main` (or `master`) branch on GitHub.
-2. Go to your GitHub repository in the browser.
-3. Navigate to **Settings** > **Pages**.
-4. Under **Build and deployment**, change the **Source** dropdown to **GitHub Actions**.
-5. The workflow will automatically run, build the Vite app, and deploy it.
-6. Once completed, your app will be live at `https://<your-username>.github.io/<your-repo-name>/`. Any user visiting the site will be prompted to securely enter their own API key in their browser to use the AI features.
 
 ---
 

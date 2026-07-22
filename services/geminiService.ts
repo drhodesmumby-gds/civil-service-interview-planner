@@ -1,20 +1,49 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { InterviewSection, InterviewProfile } from '../types';
 
+export const AVAILABLE_MODELS = [
+  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash (Fast & Responsive)' },
+  { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview (Advanced Reasoning)' }
+] as const;
+
+export const getSelectedModel = (): string => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('gemini_model');
+    if (stored && (stored === 'gemini-3.6-flash' || stored === 'gemini-3.1-pro-preview')) {
+      return stored;
+    }
+  }
+  return 'gemini-3.6-flash';
+};
+
+export const setSelectedModel = (model: string): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('gemini_model', model);
+  }
+};
+
+let inMemoryApiKey: string | null = null;
+
+export const setApiKey = (key: string | null) => {
+  inMemoryApiKey = key;
+};
+
+export const getApiKey = () => {
+  return inMemoryApiKey;
+};
+
 const getAiClient = () => {
   const envKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  const localKey = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
-  const apiKey = localKey || envKey;
+  const apiKey = inMemoryApiKey || envKey;
   if (!apiKey) {
-    throw new Error("API Key not found in environment variables or local storage");
+    throw new Error("API Key not found in environment variables or session memory");
   }
   return new GoogleGenAI({ apiKey });
 };
 
 export const hasApiKey = (): boolean => {
   const envKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  const localKey = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
-  return !!(localKey || envKey);
+  return !!(inMemoryApiKey || envKey);
 };
 
 // --- DEFAULT PROMPT TEMPLATES (British English) ---
@@ -170,7 +199,7 @@ export const generateInterviewPlan = async (profile: InterviewProfile, promptTem
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: getSelectedModel(),
       contents: prompt,
       config: {
         systemInstruction: "You are an expert UK Civil Service interview coach. You provide structured, timed interview plans based on Success Profiles. You prioritise deep, single-example answers over generic breadth.",
@@ -218,7 +247,7 @@ export const extractJobDetails = async (jobAdvertText: string, promptTemplate: s
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: getSelectedModel(),
       contents: prompt,
       config: {
         systemInstruction: "You are a recruitment assistant. Extract the Role, Grade, Department, Team, and required Behaviours/Competencies from the text. If a field is not found, leave it empty.",
@@ -267,7 +296,7 @@ export const generateFollowUpQuestions = async (section: InterviewSection, caree
 
   try {
      const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: getSelectedModel(),
       contents: prompt,
       config: {
         systemInstruction: "You are a tough Civil Service interview panelist. You ask probing follow-up questions to test depth, evidence, and authenticity. You also provide strategic advice on how to answer them based on the candidate's history.",
@@ -323,7 +352,7 @@ export const regenerateSectionNotes = async (section: InterviewSection, profile:
 
    try {
      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: getSelectedModel(),
         contents: prompt,
      });
      return response.text || section.notes;
@@ -354,7 +383,7 @@ export const parseInterviewNotes = async (text: string): Promise<InterviewSectio
 
   try {
      const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: getSelectedModel(),
       contents: prompt,
       config: {
         systemInstruction: "You are an assistant that structures raw interview notes. You must intelligently separate metadata (Title, Question, Duration) from the content (Notes), while keeping the content absolutely verbatim.",

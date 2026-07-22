@@ -21,24 +21,24 @@ export const Button: React.FC<ButtonProps> = ({
   const isGds = theme === 'GDS';
 
   const baseStyles = isGds
-    ? "inline-flex items-center justify-center gap-2 px-4 py-2 font-normal transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 focus:ring-offset-[#0b0c0c] disabled:opacity-50 disabled:cursor-not-allowed text-base font-sans"
+    ? "inline-flex items-center justify-center gap-2 px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 focus:ring-offset-[#0b0c0c] disabled:opacity-50 disabled:cursor-not-allowed text-base font-sans font-bold rounded-none select-none"
     : "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variants = {
     primary: isGds 
-      ? "bg-[#00703c] hover:bg-[#005a30] text-white shadow-[0_2px_0_#002d18] mb-[2px] active:shadow-none active:translate-y-[2px] active:mb-0"
+      ? "bg-[#00703c] hover:bg-[#005a30] text-white shadow-[0_3px_0_#002d18] active:shadow-none active:translate-y-[3px]"
       : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 focus:ring-blue-500",
     
     secondary: isGds
-      ? "bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#e4e2e0] shadow-[0_2px_0_#b1b4b6] mb-[2px] active:shadow-none active:translate-y-[2px] active:mb-0"
+      ? "bg-[#f3f2f1] text-[#0b0c0c] border border-[#0b0c0c] hover:bg-[#e4e2e0] shadow-[0_3px_0_#0b0c0c] active:shadow-none active:translate-y-[3px]"
       : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:ring-slate-200",
     
     danger: isGds
-      ? "bg-[#d4351c] text-white hover:bg-[#a31c12] shadow-[0_2px_0_#6b0f0a] mb-[2px] active:shadow-none active:translate-y-[2px] active:mb-0"
+      ? "bg-[#d4351c] text-white hover:bg-[#a31c12] shadow-[0_3px_0_#6b0f0a] active:shadow-none active:translate-y-[3px]"
       : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 focus:ring-red-500",
     
     ghost: isGds
-      ? "bg-transparent text-[#1d70b8] underline hover:text-[#003078]"
+      ? "bg-transparent text-[#1d70b8] underline decoration-2 underline-offset-4 hover:text-[#003078]"
       : "bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900"
   };
 

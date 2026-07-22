@@ -34,7 +34,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} />}
+      {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} theme={theme} />}
       
       <div className={`h-full ${isGds ? 'bg-[#f3f2f1] text-[#0b0c0c] font-sans' : 'bg-slate-50 text-slate-900 font-sans'} flex flex-col overflow-hidden transition-colors duration-300`}>
         {appState === AppState.SETUP && (

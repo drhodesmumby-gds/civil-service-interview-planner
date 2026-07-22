@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Wand2, GripVertical, Play, Clock, FileText, ClipboardPaste, Upload, FileUp, ChevronDown, ChevronUp, X, Briefcase, ScanSearch, Loader2, Bug, Terminal, HelpCircle, Sparkles, MessageSquare, Settings, ToggleLeft, ToggleRight, KeyRound } from 'lucide-react';
+import { Plus, Trash2, Wand2, GripVertical, Play, Clock, FileText, ClipboardPaste, Upload, FileUp, ChevronDown, ChevronUp, X, Briefcase, ScanSearch, Loader2, Bug, Terminal, HelpCircle, Sparkles, MessageSquare, Settings, ToggleLeft, ToggleRight, KeyRound, Download, Printer } from 'lucide-react';
 import { InterviewSection, InterviewProfile, Theme } from '../types';
 import { Button } from './Button';
+import { exportAsText, exportAsPdf } from '../utils/exportUtils';
 import { 
   generateInterviewPlan, 
   parseInterviewNotes, 
   extractJobDetails, 
   regenerateSectionNotes,
   hasApiKey,
+  setApiKey,
+  AVAILABLE_MODELS,
+  getSelectedModel,
+  setSelectedModel,
   DEFAULT_PLAN_PROMPT,
   DEFAULT_REGEN_PROMPT,
   DEFAULT_INTRO_PROMPT,
@@ -82,6 +87,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isBehavioursOpen, setIsBehavioursOpen] = useState(false);
   const [isKnownQuestionsOpen, setIsKnownQuestionsOpen] = useState(false);
   const [isCustomGrade, setIsCustomGrade] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   
   // Prompt Customisation State
   const [prompts, setPrompts] = useState({
@@ -132,9 +138,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const handleApiKeySave = (key: string) => {
-    localStorage.setItem('gemini_api_key', key);
+    setApiKey(key || null);
     setShowApiKeyModal(false);
-    if (pendingAction) {
+    if (pendingAction && key) {
       pendingAction();
       setPendingAction(null);
     }
@@ -468,45 +474,57 @@ export const SetupView: React.FC<SetupViewProps> = ({
   
   // Theme styling helpers
   const cardClass = isGds 
-    ? "bg-white p-6 border-b-2 border-[#b1b4b6] space-y-4" 
+    ? "bg-white p-6 border-2 border-[#b1b4b6] space-y-4 rounded-none" 
     : "bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4";
   
   const inputClass = isGds
-    ? "w-full px-4 py-2 border-2 border-[#0b0c0c] focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 bg-white text-[#0b0c0c]"
+    ? "w-full px-4 py-2 border-2 border-[#0b0c0c] focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 bg-white text-[#0b0c0c] rounded-none font-sans"
     : "w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-900";
     
   const textAreaClass = isGds
-    ? "w-full px-4 py-2 border-2 border-[#0b0c0c] focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 bg-white text-[#0b0c0c]"
+    ? "w-full px-4 py-2 border-2 border-[#0b0c0c] focus:outline-none focus:ring-4 focus:ring-[#ffdd00] focus:ring-offset-2 bg-white text-[#0b0c0c] rounded-none font-sans"
     : "w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none resize-none text-sm bg-white text-slate-900";
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-6 space-y-8 pb-48">
+    <div className={`w-full max-w-7xl mx-auto p-6 space-y-8 pb-48 ${isGds ? 'font-sans text-[#0b0c0c]' : ''}`}>
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-2">
-          <h1 className={`text-3xl font-bold tracking-tight ${isGds ? 'text-[#0b0c0c]' : 'text-slate-900'}`}>Interview Planner</h1>
+          <h1 className={`text-3xl md:text-4xl font-bold tracking-tight ${isGds ? 'text-[#0b0c0c]' : 'text-slate-900'}`}>Interview Planner</h1>
           <p className={`${isGds ? 'text-[#505a5f] text-lg' : 'text-slate-500'}`}>Setup your mock interview structure manually, import existing notes, or let Gemini AI build a plan for you.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button 
             onClick={() => setShowApiKeyModal(true)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isGds ? 'bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#e4e2e0]' : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
+              isGds 
+                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] font-bold hover:bg-[#e4e2e0] shadow-[0_2px_0_#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]' 
+                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
+            }`}
           >
             <KeyRound className="w-5 h-5" />
             API Key
           </button>
           <button 
             onClick={onShowAbout}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isGds ? 'bg-white text-[#1d70b8] border-2 border-[#1d70b8] hover:bg-[#f3f2f1]' : 'bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50'}`}
+            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
+              isGds 
+                ? 'bg-[#f3f2f1] text-[#0b0c0c] border-2 border-[#0b0c0c] font-bold hover:bg-[#e4e2e0] shadow-[0_2px_0_#0b0c0c] focus:ring-4 focus:ring-[#ffdd00]' 
+                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
+            }`}
           >
             <HelpCircle className="w-5 h-5" />
             About / Help
           </button>
           <button 
             onClick={toggleTheme}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isGds ? 'bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#e4e2e0]' : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium transition-colors ${
+              isGds 
+                ? 'bg-[#00703c] text-white font-bold hover:bg-[#005a30] shadow-[0_2px_0_#002d18] focus:ring-4 focus:ring-[#ffdd00]' 
+                : 'bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50'
+            }`}
           >
-            {isGds ? <ToggleRight className="w-5 h-5 text-[#00703c]" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
-            {isGds ? 'GOV.UK Theme Active' : 'Switch to GOV.UK Theme'}
+            {isGds ? <ToggleRight className="w-5 h-5 text-[#ffdd00]" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
+            {isGds ? 'GOV.UK-ish Theme Active' : 'Switch to GOV.UK-ish Theme'}
           </button>
         </div>
       </header>
@@ -805,9 +823,58 @@ export const SetupView: React.FC<SetupViewProps> = ({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className={`text-xl font-semibold ${isGds ? 'text-[#0b0c0c]' : 'text-slate-800'}`}>Interview Sections</h2>
-          <Button onClick={addSection} variant="secondary" icon={<Plus className="w-4 h-4"/>} theme={theme}>
-            Add Section
-          </Button>
+          <div className="flex items-center gap-2 relative">
+            {sections.length > 0 && (
+              <div className="relative">
+                <Button 
+                  onClick={() => setShowExportMenu(!showExportMenu)} 
+                  variant="outline" 
+                  icon={<Download className="w-4 h-4"/>} 
+                  theme={theme}
+                  className="text-xs"
+                >
+                  Export Notes
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+
+                {showExportMenu && (
+                  <div className={`absolute right-0 mt-2 w-56 rounded-lg shadow-xl z-30 p-2 space-y-1 ${
+                    isGds ? 'bg-white border-2 border-[#0b0c0c]' : 'bg-white border border-slate-200'
+                  }`}>
+                    <button
+                      onClick={() => {
+                        exportAsPdf(sections, profile, theme);
+                        setShowExportMenu(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded transition-colors text-left ${
+                        isGds ? 'hover:bg-[#f3f2f1] text-[#0b0c0c]' : 'hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <Printer className="w-4 h-4 text-blue-600" />
+                      <span>Export as PDF / Printable</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        exportAsText(sections, profile);
+                        setShowExportMenu(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded transition-colors text-left ${
+                        isGds ? 'hover:bg-[#f3f2f1] text-[#0b0c0c]' : 'hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <span>Export as Text File (.txt)</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button onClick={addSection} variant="secondary" icon={<Plus className="w-4 h-4"/>} theme={theme}>
+              Add Section
+            </Button>
+          </div>
         </div>
 
         {sections.length === 0 ? (
@@ -993,6 +1060,22 @@ export const SetupView: React.FC<SetupViewProps> = ({
                >
                  <Settings className="w-3 h-3" /> Prompt Editor
                </button>
+               <div className="h-4 w-px bg-slate-600"></div>
+               <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                 <span>Model:</span>
+                 <select
+                   value={getSelectedModel()}
+                   onChange={(e) => {
+                     setSelectedModel(e.target.value);
+                     setLogs(prev => [...prev, `[SYSTEM] Model set to ${e.target.value}`]);
+                   }}
+                   className="bg-slate-700 text-slate-100 text-xs rounded px-2 py-0.5 border border-slate-600 outline-none focus:ring-1 focus:ring-blue-400"
+                 >
+                   {AVAILABLE_MODELS.map(m => (
+                     <option key={m.id} value={m.id}>{m.id}</option>
+                   ))}
+                 </select>
+               </div>
              </div>
              <div className="flex gap-2">
                 <button onClick={() => setLogs([])} className="text-xs text-slate-400 hover:text-white">Clear Logs</button>

@@ -205,25 +205,25 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
   const sidePanelWidthClass = showFollowUps ? 'w-[30rem] xl:w-[35rem]' : 'w-96';
 
   return (
-    <div className={`h-full flex flex-col overflow-hidden ${isGds ? 'bg-[#f3f2f1]' : 'bg-slate-50'}`}>
-      {/* Top Bar */}
-      <div className={`px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0 ${isGds ? 'bg-white border-b-2 border-[#1d70b8]' : 'bg-white border-b border-slate-200'}`}>
+    <div className={`h-full flex flex-col overflow-hidden ${isGds ? 'bg-[#f3f2f1] font-sans text-[#0b0c0c]' : 'bg-slate-50'}`}>
+      {/* App Control Bar */}
+      <div className={`px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0 ${isGds ? 'bg-white border-b-2 border-[#0b0c0c]' : 'bg-white border-b border-slate-200'}`}>
         <div className="flex items-center gap-4">
-           <button onClick={onExit} className={`text-sm font-medium ${isGds ? 'text-[#1d70b8] underline hover:text-[#003078]' : 'text-slate-500 hover:text-slate-800'}`}>
-             Exit
+           <button onClick={onExit} className={`text-sm font-bold ${isGds ? 'text-[#1d70b8] underline hover:text-[#003078]' : 'text-slate-500 hover:text-slate-800'}`}>
+             Exit Setup
            </button>
-           <div className="h-6 w-px bg-slate-200"></div>
+           <div className={`h-6 w-px ${isGds ? 'bg-[#b1b4b6]' : 'bg-slate-200'}`}></div>
            <div>
-             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Time</h2>
+             <h2 className={`text-xs font-bold uppercase tracking-wider ${isGds ? 'text-[#505a5f]' : 'text-slate-500'}`}>Total Time</h2>
              <span className={`font-mono text-lg ${isGds ? 'text-[#0b0c0c] font-bold' : 'text-slate-800'}`}>{formatTime(elapsedTotal)}</span>
            </div>
         </div>
-        <div className="flex flex-col items-end w-1/3">
-           <div className="flex justify-between w-full text-xs font-medium text-slate-500 mb-1">
+        <div className="flex flex-col items-end w-1/3 max-w-xs">
+           <div className={`flex justify-between w-full text-xs font-bold mb-1 ${isGds ? 'text-[#0b0c0c]' : 'text-slate-500'}`}>
              <span>Progress</span>
              <span>{Math.round(progressPercentage)}%</span>
            </div>
-           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+           <div className={`w-full h-2.5 overflow-hidden ${isGds ? 'bg-[#f3f2f1] border border-[#0b0c0c]' : 'bg-slate-100 rounded-full'}`}>
              <div 
                 className={`h-full transition-all duration-500 ease-out ${isGds ? 'bg-[#1d70b8]' : 'bg-blue-600'}`}
                 style={{ width: `${progressPercentage}%` }}
