@@ -53,7 +53,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ onAccept }) =>
 
           <div className="govuk-form-group mb-0 pt-4 border-t-2 border-[#b1b4b6]">
             <div className="govuk-checkboxes govuk-checkboxes--small">
-              <div className="govuk-checkboxes__item flex items-center">
+              <div className="govuk-checkboxes__item">
                 <input 
                   id="disclaimer-checkbox"
                   type="checkbox" 
@@ -61,7 +61,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ onAccept }) =>
                   checked={isAccepted}
                   onChange={(e) => setIsAccepted(e.target.checked)}
                 />
-                <label className="govuk-label govuk-checkboxes__label font-bold text-sm" htmlFor="disclaimer-checkbox">
+                <label className="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold" htmlFor="disclaimer-checkbox">
                   I understand that this tool is for practice only and I will not input sensitive government data.
                 </label>
               </div>
