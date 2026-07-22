@@ -801,6 +801,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 <button 
                   onClick={() => setShowExportMenu(!showExportMenu)} 
                   className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                >
                   Export Notes
                 </button>
 
