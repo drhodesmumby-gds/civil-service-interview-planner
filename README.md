@@ -7,9 +7,9 @@ A structured preparation and practice application designed to help candidates pr
 > - **Data Privacy**: Do not paste or upload classified, sensitive, or personal government/departmental data into the app.
 
 ## Personal Note
-I vibed this sometime in late 2025 to assist in preparing for a lengthy round of interviews, in which I always struggled on timing my questions in particular. I always meant to make it public but never quite got round to it, and now feel slightly guilted into it by the recent announcement that [Success Profiles are being scrapped](https://www.civilserviceworld.com/professions/article/civil-service-success-profiles-to-be-scrapped). I say guilted - there is a genuine feeling there, as I did genuinely actually find the tool very useful for my prep as a neurodiverse candidate, and I do wonder if it could have been more helpful for others using Success Profiles.
+I vibed this sometime in late 2025 to assist in preparing for a lengthy round of interviews, in which I always struggled on timing my questions in particular. I always meant to make it public but never quite got round to it, and now feel slightly guilted into it by the recent announcement that [Success Profiles are being scrapped](https://www.civilserviceworld.com/professions/article/civil-service-success-profiles-to-be-scrapped). I say guilted - there is a sincere feeling there, as I did genuinely actually find the tool very useful for my prep as a neurodiverse candidate, and I do wonder if it could have been more helpful for others using Success Profiles.
 
-With that said, the generative AI functionality (the bit most pertinent to Success Profiles) I think is mostly not all that interesting or hugely effective. The prompts are not amazingly well-defined, particularly missing the actual Behaviours criteria (easily added with some effort, but I was never as interested in that aspect with this tool) and, at least when I was last doing this, even Gemini 3 Pro - then cutting edge - struggled with developing truly good material even with the context of my full career history. There are far better tools and prompts out there to support the actual drafting of your preparation material.
+With that said, the generative AI functionality (the bit most pertinent to Success Profiles) I think is mostly not all that interesting or hugely effective. The prompts are not amazingly well-defined and, at least when I was last doing this, even Gemini 3 Pro - then cutting edge - struggled with developing truly good material even with the context of my full career history. There are far better tools and prompts out there to support the actual drafting of your preparation material.
 
 Some of the feature ideas did inform a much more interesting AI tutoring project I undertook a little later however, which I intend to make public soon.
 
@@ -23,6 +23,7 @@ Some of the feature ideas did inform a much more interesting AI tutoring project
 - ❓ **Follow-Up Question Predictor**: Generate realistic panel follow-up questions based on your specific notes to test your preparation on the spot.
 - 📄 **Document Import**: Import job descriptions, personal statements, or existing notes from PDF and Word (`.docx`) files.
 - 🏛️ **GOV.UK Design System**: Clean, accessible, and familiar aesthetic using the official `govuk-frontend` and `@ministryofjustice/frontend` styling, ensuring zero visual distractions.
+- 🔒 **Privacy-First Analytics**: If the user opts in, utilises [Umami Analytics](https://umami.is), a cookie-free, GDPR-compliant platform that tracks usage without collecting personal data or text inputs.
 
 ---
 
@@ -32,6 +33,7 @@ Some of the feature ideas did inform a much more interesting AI tutoring project
 - **Styling**: Vanilla CSS, `govuk-frontend`, `@ministryofjustice/frontend`, Lucide React Icons
 - **AI Integration**: `@google/genai` (Gemini API)
 - **Document Processing**: `pdfjs-dist`, `mammoth` (Word docx parsing)
+- **Analytics**: [Umami](https://umami.is) (Privacy-focused, cookie-free analytics)
 
 ---
 

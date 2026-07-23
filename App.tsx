@@ -5,6 +5,7 @@ import { DisclaimerModal } from './components/DisclaimerModal';
 import { AboutView } from './components/AboutView';
 import { PromptEditorView } from './components/PromptEditorView';
 import { AppState, InterviewSection } from './types';
+import { initAnalytics, trackPageView } from './utils/analytics';
 
 const Header: React.FC = () => (
   <header className="govuk-header" role="banner" data-module="govuk-header">
@@ -87,6 +88,21 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.SETUP);
   const [careerHistory, setCareerHistory] = useState<string>('');
   const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [hasAnalyticsConsent, setHasAnalyticsConsent] = useState(false);
+
+  React.useEffect(() => {
+    if (!showDisclaimer && hasAnalyticsConsent) {
+      trackPageView(appState);
+    }
+  }, [appState, showDisclaimer, hasAnalyticsConsent]);
+
+  const handleAcceptDisclaimer = (analyticsConsent: boolean) => {
+    setHasAnalyticsConsent(analyticsConsent);
+    setShowDisclaimer(false);
+    if (analyticsConsent) {
+      initAnalytics();
+    }
+  };
 
   const [sections, setSections] = useState<InterviewSection[]>([
     {
@@ -105,7 +121,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} />}
+      {showDisclaimer && <DisclaimerModal onAccept={handleAcceptDisclaimer} />}
       
       <div className={appState === AppState.RUNNING ? "app-container live-view-dashboard" : "app-container"}>
         <Header />

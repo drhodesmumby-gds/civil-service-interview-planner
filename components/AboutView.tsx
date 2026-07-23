@@ -76,7 +76,7 @@ export const AboutView: React.FC = () => {
             <h2 className="govuk-heading-l">Personal Note</h2>
             <div className="govuk-inset-text">
               <p className="govuk-body">
-                I built this tool to assist in preparing for a lengthy round of interviews, in which I always struggled on timing my questions in particular. I always meant to make it public but never quite got round to it, and now feel slightly guilted into it by the recent announcement that <a href="https://www.civilserviceworld.com/professions/article/civil-service-success-profiles-to-be-scrapped" target="_blank" rel="noreferrer" className="govuk-link">Success Profiles are being scrapped</a>. I say guilted - there is a genuine feeling there, as I did genuinely actually find the tool very useful for my prep as a neurodiverse candidate, and I do wonder if it could have been more helpful for others using Success Profiles.
+                I built this tool to assist in preparing for a lengthy round of interviews, in which I always struggled on timing my questions in particular. I always meant to make it public but never quite got round to it, and now feel slightly guilted into it by the recent announcement that <a href="https://www.civilserviceworld.com/professions/article/civil-service-success-profiles-to-be-scrapped" target="_blank" rel="noreferrer" className="govuk-link">Success Profiles are being scrapped</a>. I say guilted - there is a sincere feeling there, as I did genuinely actually find the tool very useful for my prep as a neurodiverse candidate, and I do wonder if it could have been more helpful for others using Success Profiles.
               </p>
               <p className="govuk-body">
                 With that said, the generative AI functionality (the bit most pertinent to Success Profiles) I think is mostly not all that interesting or hugely effective. The prompts are not amazingly well-defined and, at least when I was last doing this, even Gemini 3 Pro - then cutting edge - struggled with developing truly good material even with the context of my full career history. There are far better tools and prompts out there to support the actual drafting of your preparation material.
@@ -90,7 +90,7 @@ export const AboutView: React.FC = () => {
           <section id="api-key-models" className="govuk-!-margin-bottom-8">
             <h2 className="govuk-heading-l">API Key & AI Models</h2>
             <p className="govuk-body">
-              Generative AI capabilities (plan generation, job detail extraction, note regeneration, and follow-up prediction) run directly on Google Gemini models.
+              Generative AI capabilities (plan generation, job detail extraction, note regeneration, and follow-up suggestions) run directly on Google Gemini models.
             </p>
             
             <dl className="govuk-summary-list">
@@ -104,11 +104,11 @@ export const AboutView: React.FC = () => {
               </div>
               <div className="govuk-summary-list__row">
                 <dt className="govuk-summary-list__key">Content Security Policy (CSP)</dt>
-                <dd className="govuk-summary-list__value">Defined via an HTML <code>&lt;meta&gt;</code> tag. Specifies allowed connect endpoints (<code>connect-src</code>) and image sources (<code>img-src</code>).</dd>
+                <dd className="govuk-summary-list__value">Specifies allowed connect endpoints (<code>connect-src</code>) of the Gemini API / Umami analytics (if opted in) and image sources (<code>img-src</code>).</dd>
               </div>
             </dl>
 
-            <div className="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+            <div className="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner" style={{ maxWidth: '70%' }}>
               <div className="govuk-notification-banner__header">
                 <h2 className="govuk-notification-banner__title" id="govuk-notification-banner-title">
                   Important Information
@@ -117,7 +117,12 @@ export const AboutView: React.FC = () => {
               <div className="govuk-notification-banner__content">
                 <h3 className="govuk-notification-banner__heading">Error Handling & Privacy</h3>
                 <p className="govuk-body">
-                  If an API key is missing or invalid when you trigger an AI feature, the application will display a clear prompt asking you to enter your key. Manual notes, custom timings, and imported files remain fully functional regardless of API key availability.
+                  If an API key is missing or invalid when you trigger an AI feature, the application will display a clear prompt asking you to enter your key. Non-AI features remain fully functional regardless of API key availability.
+                </p>
+                <p className="govuk-body">
+                  <strong>Privacy & Analytics</strong>
+                  <p>If you consent in the modal when you visit the site, this application uses <a href="https://umami.is" target="_blank" rel="noopener noreferrer" className="govuk-link">Umami Analytics</a>, a privacy-first, cookie-free tool. It tracks generic usage data (like page views) to help me understand usage of and improve the tool, but <strong>no personal data, text inputs, or any aspect of your career information are ever collected or tracked</strong> (by me or Umami at least - you should be thoroughly aware and cautious of what data you use with the AI features, which are governed by Google's policies).
+                  </p>
                 </p>
               </div>
             </div>

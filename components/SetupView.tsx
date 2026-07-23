@@ -18,8 +18,10 @@ import {
   formatGeminiError
 } from '../services/geminiService';
 import { ApiKeyModal } from './ApiKeyModal';
+import { JobAdvertModal } from './JobAdvertModal';
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
 interface SetupViewProps {
   sections: InterviewSection[];
@@ -80,6 +82,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isCustomGrade, setIsCustomGrade] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeSetupTab, setActiveSetupTab] = useState<'ai-generator' | 'context' | 'import'>('context');
+  const [isJobAdvertModalOpen, setIsJobAdvertModalOpen] = useState(false);
   
   // Regeneration State
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<string | null>(null);
@@ -170,15 +173,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
     };
   }, [debugMode]);
 
-  // Use jsdelivr for consistency with the main library import in index.html
-  const WORKER_SRC = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
-
   useEffect(() => {
     try {
       const lib = pdfjsLib as any;
       const GlobalWorkerOptions = lib.GlobalWorkerOptions || lib.default?.GlobalWorkerOptions;
       if (GlobalWorkerOptions) {
-        GlobalWorkerOptions.workerSrc = WORKER_SRC;
+        GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
         addLog("Initial worker configuration successful", 'success');
       }
     } catch (e: any) {
@@ -292,7 +292,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
         alert(formatGeminiError(error));
       } finally {
         setIsExtractingJob(false);
-        setActiveSetupTab('ai-generator');
+        setIsJobAdvertModalOpen(false);
       }
     });
   };
@@ -320,8 +320,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
         // Force worker source before loading
         if (GlobalWorkerOptions) {
-           GlobalWorkerOptions.workerSrc = WORKER_SRC;
-           addLog(`Worker URL forced to: ${WORKER_SRC}`, 'info');
+           GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+           addLog(`Worker URL forced to local bundle`, 'info');
         }
 
         const loadingTask = getDocument({
@@ -492,26 +492,35 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <ul className="govuk-tabs__list">
               <li className={`govuk-tabs__list-item ${activeSetupTab === 'context' ? 'govuk-tabs__list-item--selected' : ''}`}>
                 <a className="govuk-tabs__tab" href="#context" onClick={(e) => { e.preventDefault(); setActiveSetupTab('context'); }}>
-                  My Context
+                  Career History
                 </a>
               </li>
               <li className={`govuk-tabs__list-item ${activeSetupTab === 'ai-generator' ? 'govuk-tabs__list-item--selected' : ''}`}>
                 <a className="govuk-tabs__tab" href="#ai-generator" onClick={(e) => { e.preventDefault(); setActiveSetupTab('ai-generator'); }}>
-                  Plan Generator
+                  AI Plan
                 </a>
               </li>
               <li className={`govuk-tabs__list-item ${activeSetupTab === 'import' ? 'govuk-tabs__list-item--selected' : ''}`}>
                 <a className="govuk-tabs__tab" href="#import" onClick={(e) => { e.preventDefault(); setActiveSetupTab('import'); }}>
-                  Import Text
+                  Import
                 </a>
               </li>
             </ul>
 
             {/* TAB CONTENT: AI GENERATOR */}
             <div className={`govuk-tabs__panel ${activeSetupTab !== 'ai-generator' ? 'govuk-tabs__panel--hidden' : ''}`} id="ai-generator">
-              <div className="flex items-center gap-2 mb-4">
-                <Wand2 className="w-5 h-5" />
-                <h2 className="govuk-heading-m govuk-!-margin-bottom-0">AI Plan Generator</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  {/* <Wand2 className="w-5 h-5" /> */}
+                  <h2 className="govuk-heading-m govuk-!-margin-bottom-0">AI Plan Generator</h2>
+                </div>
+                <button 
+                  onClick={() => requireApiKey(() => setIsJobAdvertModalOpen(true))}
+                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
+                >
+                  {/* <Briefcase className="w-4 h-4" /> */}
+                  Auto-fill from advert
+                </button>
               </div>
               <div className="space-y-3">
                 <input
@@ -679,7 +688,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <div className={`govuk-tabs__panel ${activeSetupTab !== 'context' ? 'govuk-tabs__panel--hidden' : ''}`} id="context">
 			
 			<div>
-                   <p className="govuk-body govuk-!-margin-bottom-4">For AI-assisted preparation, once you have provided your context below - the job advert and / or your career history - proceed to the Plan Generator to configure your mock interview. If you don't want AI assistance, you can skip past this tab.</p>
+                   <p className="govuk-body govuk-!-margin-bottom-4">For AI-assisted preparation, once you have provided your context below, proceed to the Plan Generator to configure your mock interview. If you don't want AI assistance, you can skip past this tab.</p>
                    <button 
                      className="govuk-button w-full"
                      onClick={() => setActiveSetupTab('ai-generator')}
@@ -688,53 +697,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                    </button>
                  </div>
               
-              {/* Job Advert Context */}
-              <div className="govuk-!-margin-bottom-6">
-                 <div className="flex items-center justify-between mb-2">
-                   <div className="flex items-center gap-2">
-                     <Briefcase className="w-5 h-5" />
-                     <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Job Advert</h2>
-                   </div>
-                   {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/></div>}
-                 </div>
-                 
-                 <div className="govuk-form-group govuk-!-margin-bottom-4">
-                   <textarea 
-                     className={textAreaClass}
-                     placeholder="Paste job advert text here..."
-                     value={jobAdvertText}
-                     onChange={e => setJobAdvertText(e.target.value)}
-                     disabled={isProcessingFile}
-                     rows={6}
-                   />
-                 </div>
-                 
-                 <div className="govuk-form-group govuk-!-margin-bottom-4">
-                   <label className="govuk-label govuk-!-font-weight-bold" htmlFor="job-file-upload">
-                     Or upload a file
-                   </label>
-                   <input 
-                     className="govuk-file-upload" 
-                     id="job-file-upload" 
-                     type="file" 
-                     accept=".txt,.md,.json,.docx,.pdf"
-                     disabled={isProcessingFile}
-                     onChange={(e) => {
-                       if(e.target.files?.[0]) handleFileRead(e.target.files[0], setJobAdvertText);
-                       e.target.value = '';
-                     }}
-                   />
-                 </div>
-
-                 <button 
-                   className="govuk-button govuk-button--secondary w-full"
-                   onClick={handleJobAdvertExtract} 
-                   disabled={!jobAdvertText.trim() || isProcessingFile} 
-                 >
-                   {isExtractingJob ? 'Extracting...' : 'Auto-fill from Advert'}
-                 </button>
-              </div>
-
               {/* Career History Context */}
               <div>
                  <div className="flex items-center justify-between mb-2">
@@ -1066,6 +1028,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
           onSave={handleApiKeySave}
         />
       )}
+      <JobAdvertModal
+        isOpen={isJobAdvertModalOpen}
+        onClose={() => setIsJobAdvertModalOpen(false)}
+        jobAdvertText={jobAdvertText}
+        setJobAdvertText={setJobAdvertText}
+        isProcessingFile={isProcessingFile}
+        handleFileRead={handleFileRead}
+        handleJobAdvertExtract={handleJobAdvertExtract}
+        isExtractingJob={isExtractingJob}
+      />
       </div>
   );
 };
