@@ -41,6 +41,8 @@ jobs:
       - name: Build
         # Passing the repository name as the base path for Vite so assets load correctly on GH Pages
         run: npx vite build --base=/${{ github.event.repository.name }}/
+        env:
+          VITE_UMAMI_WEBSITE_ID: ${{ secrets.VITE_UMAMI_WEBSITE_ID }}
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
