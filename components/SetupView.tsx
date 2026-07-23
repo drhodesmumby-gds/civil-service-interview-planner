@@ -14,7 +14,8 @@ import {
   AVAILABLE_MODELS,
   getSelectedModel,
   setSelectedModel,
-  getStoredPrompts
+  getStoredPrompts,
+  formatGeminiError
 } from '../services/geminiService';
 import { ApiKeyModal } from './ApiKeyModal';
 import mammoth from 'mammoth';
@@ -78,6 +79,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isKnownQuestionsOpen, setIsKnownQuestionsOpen] = useState(false);
   const [isCustomGrade, setIsCustomGrade] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [activeSetupTab, setActiveSetupTab] = useState<'ai-generator' | 'context' | 'import'>('context');
   
   // Regeneration State
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<string | null>(null);
@@ -196,10 +198,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
         };
         const newSections = await generateInterviewPlan(fullProfile, getStoredPrompts().PLAN);
         setSections(newSections);
-      } catch (error) {
-      console.error("Generate Plan Error:", error);
-      alert("Failed to generate plan. Please check your API key or console for details.");
-    } finally {
+      } catch (error: any) {
+        alert(formatGeminiError(error));
+      } finally {
         setIsGenerating(false);
       }
     });
@@ -213,8 +214,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
         const newSections = await parseInterviewNotes(importText);
         setSections(newSections);
         setImportText('');
-      } catch (error) {
-        alert("Failed to parse text. Please try again.");
+      } catch (error: any) {
+        alert(formatGeminiError(error));
       } finally {
         setIsImporting(false);
       }
@@ -241,8 +242,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
         updateSection(section.id, { notes: newNotes });
         setRegeneratingSectionId(null);
         setRegenerationFeedback('');
-      } catch (error) {
-        alert("Failed to regenerate notes. Please try again.");
+      } catch (error: any) {
+        alert(formatGeminiError(error));
       } finally {
         setIsRegenerating(false);
       }
@@ -281,14 +282,17 @@ export const SetupView: React.FC<SetupViewProps> = ({
           setIsBehavioursOpen(true);
         }
         
+        addLog("Job advert Auto-fill applied to profile", 'success');
+        
         if (details.grade && !CIVIL_SERVICE_GRADES.includes(details.grade)) {
           setIsCustomGrade(true);
         }
 
-      } catch (error) {
-        alert("Failed to extract details from job advert.");
+      } catch (error: any) {
+        alert(formatGeminiError(error));
       } finally {
         setIsExtractingJob(false);
+        setActiveSetupTab('ai-generator');
       }
     });
   };
@@ -462,7 +466,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const textAreaClass = "govuk-textarea";
 
   return (
-    <div className="govuk-width-container govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+    <div className="govuk-!-margin-bottom-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 govuk-!-margin-bottom-6">
         <div className="space-y-2">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">Interview Planner</h1>
@@ -471,307 +475,335 @@ export const SetupView: React.FC<SetupViewProps> = ({
         <div className="flex flex-col sm:flex-row gap-2">
           <button 
             onClick={() => setShowApiKeyModal(true)}
-            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
+            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
           >
-            <KeyRound className="w-5 h-5" />
             API Key
           </button>
         </div>
       </header>
 
-      {/* Context Grid */}
+      {/* Side-by-Side Hybrid Layout */}
       <div className="govuk-grid-row">
         
-        {/* Job Advert Context */}
-        <div className="govuk-grid-column-one-half">
-         <div className={cardClass + " flex flex-col h-full min-h-[300px]"}>
-           <div className="flex items-center justify-between mb-2">
-             <div className="flex items-center gap-2">
-               <Briefcase className="w-5 h-5" />
-               <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Job Advert Context</h2>
-             </div>
-             {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/> Processing...</div>}
-           </div>
-           
-           <p className="govuk-body govuk-!-font-size-16">Paste job description (PDF/Text) to auto-fill details.</p>
-           <div className="flex-1 flex gap-4 items-start relative govuk-!-margin-bottom-2">
-             <div className="govuk-form-group flex-1 h-full mb-0">
-               <textarea 
-                 className={textAreaClass + " h-full"}
-                 placeholder="Paste job advert text here..."
-                 value={jobAdvertText}
-                 onChange={e => setJobAdvertText(e.target.value)}
-                 disabled={isProcessingFile}
-                 rows={5}
-               />
-             </div>
-             <div className="shrink-0 flex flex-col gap-2">
-               <label className={`flex flex-col items-center justify-center w-12 h-12 border-2 transition-colors bg-white border-[#0b0c0c] ${isProcessingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#f3f2f1]'}`} title="Upload File">
-                 {isProcessingFile ? <Loader2 className="w-5 h-5 animate-spin text-[#505a5f]" /> : <Upload className="w-5 h-5 text-[#0b0c0c]" />}
-                 <input 
-                   type="file" 
-                   className="hidden" 
-                   accept=".txt,.md,.json,.docx,.pdf" 
-                   disabled={isProcessingFile}
-                   onChange={(e) => {
-                     if(e.target.files?.[0]) handleFileRead(e.target.files[0], setJobAdvertText);
-                     e.target.value = '';
-                   }} 
-                 />
-               </label>
-             </div>
-           </div>
-           <button 
-             className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 w-full flex justify-center items-center gap-2"
-             onClick={handleJobAdvertExtract} 
-             disabled={!jobAdvertText.trim() || isProcessingFile} 
-           >
-             {isExtractingJob ? <Loader2 className="w-4 h-4 animate-spin"/> : <ScanSearch className="w-4 h-4"/>}
-             Auto-fill from Advert
-           </button>
-         </div>
-        </div>
+        {/* LEFT COLUMN: CONTROL PANEL */}
+        <div className="govuk-grid-column-one-third">
+          <div className="govuk-tabs" data-module="govuk-tabs">
+            <h2 className="govuk-tabs__title">Setup Tools</h2>
+            <ul className="govuk-tabs__list">
+              <li className={`govuk-tabs__list-item ${activeSetupTab === 'context' ? 'govuk-tabs__list-item--selected' : ''}`}>
+                <a className="govuk-tabs__tab" href="#context" onClick={(e) => { e.preventDefault(); setActiveSetupTab('context'); }}>
+                  My Context
+                </a>
+              </li>
+              <li className={`govuk-tabs__list-item ${activeSetupTab === 'ai-generator' ? 'govuk-tabs__list-item--selected' : ''}`}>
+                <a className="govuk-tabs__tab" href="#ai-generator" onClick={(e) => { e.preventDefault(); setActiveSetupTab('ai-generator'); }}>
+                  Plan Generator
+                </a>
+              </li>
+              <li className={`govuk-tabs__list-item ${activeSetupTab === 'import' ? 'govuk-tabs__list-item--selected' : ''}`}>
+                <a className="govuk-tabs__tab" href="#import" onClick={(e) => { e.preventDefault(); setActiveSetupTab('import'); }}>
+                  Import Text
+                </a>
+              </li>
+            </ul>
 
-        {/* Career History Context */}
-        <div className="govuk-grid-column-one-half">
-         <div className={cardClass + " flex flex-col h-full min-h-[300px]"}>
-           <div className="flex items-center justify-between mb-2">
-             <div className="flex items-center gap-2">
-               <FileUp className="w-5 h-5" />
-               <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Career Context</h2>
-             </div>
-             {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/> Processing...</div>}
-           </div>
-
-           <p className="govuk-body govuk-!-font-size-16">Upload CV/History to generate specific STAR examples.</p>
-           <div className="flex-1 flex gap-4 items-start relative govuk-!-margin-bottom-2">
-             <div className="govuk-form-group flex-1 h-full mb-0">
-               <textarea 
-                 className={textAreaClass + " h-full"}
-                 placeholder="Paste career history here..."
-                 value={careerHistory}
-                 onChange={e => setCareerHistory(e.target.value)}
-                 disabled={isProcessingFile}
-                 rows={5}
-               />
-             </div>
-             <div className="shrink-0">
-               <label className={`flex flex-col items-center justify-center w-12 h-12 border-2 transition-colors bg-white border-[#0b0c0c] ${isProcessingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#f3f2f1]'}`} title="Upload File">
-                 {isProcessingFile ? <Loader2 className="w-5 h-5 animate-spin text-[#505a5f]" /> : <Upload className="w-5 h-5 text-[#0b0c0c]" />}
-                 <input 
-                   type="file" 
-                   className="hidden" 
-                   accept=".txt,.md,.json,.docx,.pdf" 
-                   disabled={isProcessingFile}
-                   onChange={(e) => {
-                     if(e.target.files?.[0]) handleFileRead(e.target.files[0], setCareerHistory);
-                     e.target.value = '';
-                   }} 
-                 />
-               </label>
-             </div>
-           </div>
-         </div>
-        </div>
-      </div>
-
-      <div className="govuk-grid-row">
-        {/* AI Generator Panel */}
-        <div className="govuk-grid-column-one-half">
-         <div className={cardClass + " h-full"}>
-          <div className="flex items-center gap-2 mb-2">
-            <Wand2 className="w-5 h-5" />
-            <h2 className="govuk-heading-m govuk-!-margin-bottom-0">AI Plan Generator</h2>
-          </div>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Role (e.g., Policy Advisor)"
-              className={inputClass}
-              value={profile.role}
-              onChange={e => setProfile({...profile, role: e.target.value})}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                {isCustomGrade ? (
-                  <div className="flex gap-1">
-                    <input
-                      type="text"
-                      placeholder="Specify Grade"
-                      className={inputClass}
-                      value={profile.grade}
-                      onChange={e => setProfile({...profile, grade: e.target.value})}
-                      autoFocus
-                    />
-                    <button
-                        onClick={() => {
-                          setIsCustomGrade(false);
-                          setProfile({...profile, grade: ''});
-                        }}
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
-                        title="Cancel custom grade"
-                    >
-                      <X className="w-5 h-5"/>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <select
-                      className={`${inputClass} appearance-none cursor-pointer`}
-                      value={profile.grade}
-                      onChange={(e) => {
-                        if (e.target.value === 'OTHER_CUSTOM') {
-                          setIsCustomGrade(true);
-                          setProfile({...profile, grade: ''});
-                        } else {
-                          setProfile({...profile, grade: e.target.value});
-                        }
-                      }}
-                    >
-                      <option value="" disabled>Select Grade</option>
-                      {CIVIL_SERVICE_GRADES.map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                      <option value="OTHER_CUSTOM">Other (Specify...)</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <ChevronDown className="w-4 h-4 text-slate-500" />
+            {/* TAB CONTENT: AI GENERATOR */}
+            <div className={`govuk-tabs__panel ${activeSetupTab !== 'ai-generator' ? 'govuk-tabs__panel--hidden' : ''}`} id="ai-generator">
+              <div className="flex items-center gap-2 mb-4">
+                <Wand2 className="w-5 h-5" />
+                <h2 className="govuk-heading-m govuk-!-margin-bottom-0">AI Plan Generator</h2>
+              </div>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Role (e.g., Policy Advisor)"
+                  className={inputClass}
+                  value={profile.role}
+                  onChange={e => setProfile({...profile, role: e.target.value})}
+                />
+                
+                {/* Grade Selection */}
+                <div className="relative">
+                  {isCustomGrade ? (
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        placeholder="Specify Grade"
+                        className={inputClass}
+                        value={profile.grade}
+                        onChange={e => setProfile({...profile, grade: e.target.value})}
+                        autoFocus
+                      />
+                      <button
+                          onClick={() => {
+                            setIsCustomGrade(false);
+                            setProfile({...profile, grade: ''});
+                          }}
+                          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                          title="Cancel custom grade"
+                      >
+                        <X className="w-5 h-5"/>
+                      </button>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="relative">
+                      <select
+                        className={`${inputClass} appearance-none cursor-pointer`}
+                        value={profile.grade}
+                        onChange={(e) => {
+                          if (e.target.value === 'OTHER_CUSTOM') {
+                            setIsCustomGrade(true);
+                            setProfile({...profile, grade: ''});
+                          } else {
+                            setProfile({...profile, grade: e.target.value});
+                          }
+                        }}
+                      >
+                        <option value="" disabled>Select Grade</option>
+                        {CIVIL_SERVICE_GRADES.map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                        <option value="OTHER_CUSTOM">Other (Specify...)</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <ChevronDown className="w-4 h-4 text-slate-500" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Dept (Optional)"
+                  className={inputClass}
+                  value={profile.department}
+                  onChange={e => setProfile({...profile, department: e.target.value})}
+                />
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder="Length (e.g. 45 mins)"
+                    className={inputClass}
+                    value={profile.interviewLength}
+                    onChange={e => setProfile({...profile, interviewLength: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Team (Optional)"
+                    className={inputClass}
+                    value={profile.team}
+                    onChange={e => setProfile({...profile, team: e.target.value})}
+                  />
+                </div>
+
+                {/* Known Questions Foldout */}
+                <div className="govuk-details govuk-!-margin-bottom-4" data-module="govuk-details">
+                   <summary className="govuk-details__summary" onClick={() => setIsKnownQuestionsOpen(!isKnownQuestionsOpen)}>
+                     <span className="govuk-details__summary-text">
+                       Known Questions (Optional)
+                     </span>
+                   </summary>
+                   
+                   {isKnownQuestionsOpen && (
+                     <div className="govuk-details__text bg-white">
+                       <p className="govuk-body govuk-!-font-size-14 govuk-!-margin-bottom-2 text-[#505a5f]">Paste any pre-seen questions here. The generator will prioritise these over generic behavioural questions.</p>
+                       <div className="govuk-form-group mb-0">
+                         <textarea
+                            className={textAreaClass}
+                            style={{height: '6rem'}}
+                            placeholder="1. Tell us about a time you..."
+                            value={profile.knownQuestions}
+                            onChange={e => setProfile({...profile, knownQuestions: e.target.value})}
+                         />
+                       </div>
+                     </div>
+                   )}
+                </div>
+
+                {/* Advanced Options Foldout */}
+                <div className="govuk-details govuk-!-margin-bottom-4" data-module="govuk-details">
+                   <summary className="govuk-details__summary" onClick={() => setIsBehavioursOpen(!isBehavioursOpen)}>
+                     <span className="govuk-details__summary-text">
+                       Behaviours & Competencies
+                     </span>
+                   </summary>
+                   
+                   {isBehavioursOpen && (
+                     <div className="govuk-details__text bg-white space-y-4">
+                       <div className="govuk-form-group mb-0">
+                         <label className="govuk-label govuk-!-font-weight-bold">Technical Competencies</label>
+                         <textarea
+                            className={textAreaClass}
+                            style={{height: '5rem'}}
+                            placeholder="E.g., Financial Analysis, Python, Policy drafting..."
+                            value={profile.techCompetencies}
+                            onChange={e => setProfile({...profile, techCompetencies: e.target.value})}
+                         />
+                       </div>
+
+                       <div className="govuk-form-group mb-0">
+                         <label className="govuk-label govuk-!-font-weight-bold">Behaviours (Select 3-4)</label>
+                         <div className="govuk-checkboxes govuk-checkboxes--small max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                           {CIVIL_SERVICE_BEHAVIOURS.map(behaviour => (
+                             <div key={behaviour} className="govuk-checkboxes__item">
+                               <input 
+                                 type="checkbox"
+                                 checked={profile.behaviours?.includes(behaviour)}
+                                 onChange={() => toggleBehaviour(behaviour)}
+                                 className="govuk-checkboxes__input"
+                                 id={`behaviour-${behaviour}`}
+                               />
+                               <label className="govuk-label govuk-checkboxes__label" htmlFor={`behaviour-${behaviour}`}>
+                                 {behaviour}
+                               </label>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     </div>
+                   )}
+                </div>
+
+                <button 
+                  onClick={handleGenerate} 
+                  disabled={!profile.role || !profile.grade}
+                  className="govuk-button w-full"
+                >
+                  Generate Interview Plan
+                </button>
+              </div>
+            </div>
+
+            {/* TAB CONTENT: MY CONTEXT */}
+            <div className={`govuk-tabs__panel ${activeSetupTab !== 'context' ? 'govuk-tabs__panel--hidden' : ''}`} id="context">
+			
+			<div>
+                   <p className="govuk-body govuk-!-margin-bottom-4">For AI-assisted preparation, once you have provided your context below - the job advert and / or your career history - proceed to the Plan Generator to configure your mock interview. If you don't want AI assistance, you can skip past this tab.</p>
+                   <button 
+                     className="govuk-button w-full"
+                     onClick={() => setActiveSetupTab('ai-generator')}
+                   >
+                     Next: Plan Generator
+                   </button>
+                 </div>
+              
+              {/* Job Advert Context */}
+              <div className="govuk-!-margin-bottom-6">
+                 <div className="flex items-center justify-between mb-2">
+                   <div className="flex items-center gap-2">
+                     <Briefcase className="w-5 h-5" />
+                     <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Job Advert</h2>
+                   </div>
+                   {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/></div>}
+                 </div>
+                 
+                 <div className="govuk-form-group govuk-!-margin-bottom-4">
+                   <textarea 
+                     className={textAreaClass}
+                     placeholder="Paste job advert text here..."
+                     value={jobAdvertText}
+                     onChange={e => setJobAdvertText(e.target.value)}
+                     disabled={isProcessingFile}
+                     rows={6}
+                   />
+                 </div>
+                 
+                 <div className="govuk-form-group govuk-!-margin-bottom-4">
+                   <label className="govuk-label govuk-!-font-weight-bold" htmlFor="job-file-upload">
+                     Or upload a file
+                   </label>
+                   <input 
+                     className="govuk-file-upload" 
+                     id="job-file-upload" 
+                     type="file" 
+                     accept=".txt,.md,.json,.docx,.pdf"
+                     disabled={isProcessingFile}
+                     onChange={(e) => {
+                       if(e.target.files?.[0]) handleFileRead(e.target.files[0], setJobAdvertText);
+                       e.target.value = '';
+                     }}
+                   />
+                 </div>
+
+                 <button 
+                   className="govuk-button govuk-button--secondary w-full"
+                   onClick={handleJobAdvertExtract} 
+                   disabled={!jobAdvertText.trim() || isProcessingFile} 
+                 >
+                   {isExtractingJob ? 'Extracting...' : 'Auto-fill from Advert'}
+                 </button>
               </div>
 
-              <input
-                type="text"
-                placeholder="Dept (Optional)"
-                className={inputClass}
-                value={profile.department}
-                onChange={e => setProfile({...profile, department: e.target.value})}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="text"
-                placeholder="Length (e.g. 45 mins)"
-                className={inputClass}
-                value={profile.interviewLength}
-                onChange={e => setProfile({...profile, interviewLength: e.target.value})}
-              />
-              <input
-                type="text"
-                placeholder="Team/Div (Optional)"
-                className={inputClass}
-                value={profile.team}
-                onChange={e => setProfile({...profile, team: e.target.value})}
-              />
-            </div>
-
-            {/* Known Questions Foldout */}
-            <div className="govuk-details" data-module="govuk-details">
-               <summary className="govuk-details__summary" onClick={() => setIsKnownQuestionsOpen(!isKnownQuestionsOpen)}>
-                 <span className="govuk-details__summary-text">
-                   Known Questions (Optional)
-                 </span>
-               </summary>
-               
-               {isKnownQuestionsOpen && (
-                 <div className="govuk-details__text bg-white">
-                   <p className="govuk-body govuk-!-font-size-14 govuk-!-margin-bottom-2 text-[#505a5f]">Paste any pre-seen questions here. The generator will prioritise these over generic behavioural questions.</p>
-                   <div className="govuk-form-group mb-0">
-                     <textarea
-                        className={textAreaClass}
-                        style={{height: '6rem'}}
-                        placeholder="1. Tell us about a time you..."
-                        value={profile.knownQuestions}
-                        onChange={e => setProfile({...profile, knownQuestions: e.target.value})}
-                     />
+              {/* Career History Context */}
+              <div>
+                 <div className="flex items-center justify-between mb-2">
+                   <div className="flex items-center gap-2">
+                     <FileUp className="w-5 h-5" />
+                     <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Career History</h2>
                    </div>
+                   {isProcessingFile && <div className="flex items-center gap-2 text-xs text-[#505a5f]"><Loader2 className="w-3 h-3 animate-spin"/></div>}
                  </div>
-               )}
-            </div>
 
-            {/* Advanced Options Foldout */}
-            <div className="govuk-details" data-module="govuk-details">
-               <summary className="govuk-details__summary" onClick={() => setIsBehavioursOpen(!isBehavioursOpen)}>
-                 <span className="govuk-details__summary-text">
-                   Behaviours & Competencies
-                 </span>
-               </summary>
-               
-               {isBehavioursOpen && (
-                 <div className="govuk-details__text bg-white space-y-4">
-                   <div className="govuk-form-group mb-0">
-                     <label className="govuk-label govuk-!-font-weight-bold">Technical Competencies</label>
-                     <textarea
-                        className={textAreaClass}
-                        style={{height: '5rem'}}
-                        placeholder="E.g., Financial Analysis, Python, Policy drafting..."
-                        value={profile.techCompetencies}
-                        onChange={e => setProfile({...profile, techCompetencies: e.target.value})}
-                     />
-                   </div>
-
-                   <div className="govuk-form-group mb-0">
-                     <label className="govuk-label govuk-!-font-weight-bold">Behaviours (Select 3-4)</label>
-                     <div className="govuk-checkboxes govuk-checkboxes--small max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                       {CIVIL_SERVICE_BEHAVIOURS.map(behaviour => (
-                         <div key={behaviour} className="govuk-checkboxes__item">
-                           <input 
-                             type="checkbox"
-                             checked={profile.behaviours?.includes(behaviour)}
-                             onChange={() => toggleBehaviour(behaviour)}
-                             className="govuk-checkboxes__input"
-                             id={`behaviour-${behaviour}`}
-                           />
-                           <label className="govuk-label govuk-checkboxes__label" htmlFor={`behaviour-${behaviour}`}>
-                             {behaviour}
-                           </label>
-                         </div>
-                       ))}
-                     </div>
-                   </div>
+                 <div className="govuk-form-group govuk-!-margin-bottom-4">
+                   <textarea 
+                     className={textAreaClass}
+                     placeholder="Paste career history or CV here..."
+                     value={careerHistory}
+                     onChange={e => setCareerHistory(e.target.value)}
+                     disabled={isProcessingFile}
+                     rows={6}
+                   />
                  </div>
-               )}
-            </div>
+                 
+                 <div className="govuk-form-group govuk-!-margin-bottom-0">
+                   <label className="govuk-label govuk-!-font-weight-bold" htmlFor="career-file-upload">
+                     Or upload a file
+                   </label>
+                   <input 
+                     className="govuk-file-upload" 
+                     id="career-file-upload" 
+                     type="file" 
+                     accept=".txt,.md,.json,.docx,.pdf"
+                     disabled={isProcessingFile}
+                     onChange={(e) => {
+                       if(e.target.files?.[0]) handleFileRead(e.target.files[0], setCareerHistory);
+                       e.target.value = '';
+                     }}
+                   />
+                  </div>
+                 </div>
+                 
+              </div>
 
-            <button 
-              onClick={handleGenerate} 
-              disabled={!profile.role || !profile.grade}
-              className="govuk-button w-full"
-            >
-              Generate Interview Plan
-            </button>
+            {/* TAB CONTENT: IMPORT */}
+            <div className={`govuk-tabs__panel ${activeSetupTab !== 'import' ? 'govuk-tabs__panel--hidden' : ''}`} id="import">
+              <div className="flex items-center gap-2 mb-4">
+                <ClipboardPaste className="w-5 h-5" />
+                <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Import from Text</h2>
+              </div>
+              <div className="space-y-3">
+                <textarea 
+                  className={`${textAreaClass}`}
+                  placeholder={`Paste your entire plan here...\ne.g.\nIntro (2 mins): Hi I'm...\n\nBehaviour 1 (5 mins): Situation...`}
+                  value={importText}
+                  onChange={e => setImportText(e.target.value)}
+                  rows={10}
+                />
+                <button 
+                  onClick={handleImport} 
+                  disabled={!importText.trim()}
+                  className="govuk-button govuk-button--secondary w-full"
+                >
+                  {isImporting ? 'Parsing...' : 'Parse & Import Text'}
+                </button>
+              </div>
+            </div>
           </div>
-         </div>
         </div>
 
-        {/* Import Panel */}
-        <div className="govuk-grid-column-one-half">
-         <div className={cardClass + " h-full"}>
-          <div className="flex items-center gap-2 mb-2">
-            <ClipboardPaste className="w-5 h-5" />
-            <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Import from Text</h2>
-          </div>
-          <div className="space-y-3 flex flex-col h-[calc(100%-2rem)]">
-            <textarea 
-              className={`${textAreaClass} flex-1 min-h-[150px]`}
-              placeholder={`Paste your entire plan here...\ne.g.\nIntro (2 mins): Hi I'm...\n\nBehaviour 1 (5 mins): Situation...`}
-              value={importText}
-              onChange={e => setImportText(e.target.value)}
-            />
-            <Button 
-              onClick={handleImport} 
-              disabled={!importText.trim()}
-              isLoading={isImporting}
-              className="govuk-button govuk-button--secondary w-full"
-            >
-              Parse & Import Text
-            </Button>
-          </div>
-         </div>
-        </div>
-      </div>
+        {/* RIGHT COLUMN: INTERVIEW NOTES CANVAS */}
+        <div className="govuk-grid-column-two-thirds">
 
       {/* Section List */}
       <div className="govuk-!-margin-top-8 space-y-4">
@@ -953,28 +985,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
         )}
       </div>
 
-      {/* Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#f3f2f1] border-t-2 border-[#b1b4b6] flex flex-col gap-2 items-center justify-center z-50">
-        <button 
-          onClick={onStart} 
-          disabled={sections.length === 0}
-          className="govuk-button govuk-button--start govuk-!-margin-bottom-0 w-full max-w-md flex justify-center items-center"
-        >
-          Start Mock Interview
-          <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false" style={{ marginLeft: '10px' }}>
-            <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
-          </svg>
-        </button>
-        <div className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-800 select-none" onClick={() => setDebugMode(!debugMode)}>
-           <div className={`w-3 h-3 rounded-full border ${debugMode ? 'bg-green-500 border-green-600' : 'bg-transparent border-slate-400'}`}></div>
-           Debug & Settings
-        </div>
+      </div>
       </div>
 
+      {/* Floating Debug Toggle */}
+      {!debugMode && (
+        <button 
+          onClick={() => setDebugMode(true)}
+          className="fixed bottom-6 right-6 p-3 bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full shadow-lg transition-all z-40"
+          title="Open Debug Console"
+        >
+          <Terminal className="w-5 h-5" />
+        </button>
+      )}
       {/* Debug Console & Prompt Editor */}
       {debugMode && (
         <div 
-          className="fixed bottom-24 left-4 right-4 bg-slate-900 rounded-lg shadow-2xl z-50 overflow-hidden flex flex-col border border-slate-700"
+          className="fixed bottom-0 left-0 right-0 bg-slate-900 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col border-t border-slate-700"
           style={{ height: `${debugHeight}px` }}
         >
            {/* Resize Handle */}
@@ -996,20 +1023,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
                  Debug Console
                </div>
                <div className="h-4 w-px bg-slate-600"></div>
-               <button 
-                 onClick={onShowPrompts}
-                 className="text-xs font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1"
-               >
-                 <Settings className="w-3 h-3" /> Open Prompt Editor Page
-               </button>
-               <div className="h-4 w-px bg-slate-600"></div>
                <div className="flex items-center gap-1.5 text-xs text-slate-300">
                  <span>Model:</span>
                  <select
                    value={getSelectedModel()}
                    onChange={(e) => {
                      setSelectedModel(e.target.value);
-                     setLogs(prev => [...prev, `[SYSTEM] Model set to ${e.target.value}`]);
+                     addLog(`Model set to ${e.target.value}`, 'info');
                    }}
                    className="bg-slate-700 text-slate-100 text-xs rounded px-2 py-0.5 border border-slate-600 outline-none focus:ring-1 focus:ring-blue-400"
                  >
@@ -1046,6 +1066,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
           onSave={handleApiKeySave}
         />
       )}
-    </div>
+      </div>
   );
 };

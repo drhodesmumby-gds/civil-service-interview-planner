@@ -189,9 +189,7 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = () => {
   const isDefaultPrompt = prompts[activeTab] === DEFAULT_PROMPTS[activeTab];
 
   return (
-    <div>
-      
-    <div className="govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+    <div className="govuk-!-margin-bottom-8">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-6">Prompt Editor</h1>

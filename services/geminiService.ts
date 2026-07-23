@@ -47,6 +47,20 @@ export const hasApiKey = (): boolean => {
   return !!(inMemoryApiKey || envKey);
 };
 
+export const formatGeminiError = (error: any): string => {
+  const msg = error?.message || String(error);
+  if (msg.includes("429") || msg.toLowerCase().includes("quota") || msg.toLowerCase().includes("rate limit")) {
+    return "API Rate Limit Exceeded (429). The Gemini API is currently receiving too many requests or you have exhausted your quota. Please wait a moment and try again.";
+  }
+  if (msg.includes("401") || msg.includes("API key not valid")) {
+    return "API Key Error (401). Your Google Gemini API key appears to be invalid. Please check your settings.";
+  }
+  if (msg.includes("403")) {
+    return "Permission Denied (403). The provided API key does not have access to this model or location.";
+  }
+  return `An error occurred: ${msg}`;
+};
+
 // --- DEFAULT PROMPT TEMPLATES (British English) ---
 
 export const DEFAULT_PLAN_PROMPT = `Act as an expert UK Civil Service interview coach. Generate a structured interview plan.
@@ -316,7 +330,8 @@ export const generateInterviewPlan = async (profile: InterviewProfile, promptTem
       }
     });
 
-    const rawData = response.text;
+    let rawData = response.text || "";
+    rawData = rawData.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
     if (!rawData) return [];
     
     const parsedData = JSON.parse(rawData);
@@ -366,13 +381,14 @@ export const extractJobDetails = async (jobAdvertText: string, promptTemplate: s
       }
     });
 
-    const text = response.text;
+    let text = response.text || "";
+    text = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
     if (!text) return {};
     return JSON.parse(text);
 
   } catch (error) {
     console.error("Failed to extract job details", error);
-    return {};
+    throw error;
   }
 };
 
@@ -422,13 +438,14 @@ export const generateFollowUpQuestions = async (section: InterviewSection, caree
       }
     });
 
-    const text = response.text;
+    let text = response.text || "";
+    text = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
     if (!text) return { questions: [], insights: '' };
     return JSON.parse(text);
 
   } catch (error) {
     console.error("Failed to generate follow-ups", error);
-    return { questions: [], insights: "Failed to generate insights." };
+    throw error;
   }
 };
 
@@ -500,7 +517,8 @@ export const parseInterviewNotes = async (text: string): Promise<InterviewSectio
       }
     });
     
-    const rawData = response.text;
+    let rawData = response.text || "";
+    rawData = rawData.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
     if (!rawData) return [];
     
     const parsedData = JSON.parse(rawData);

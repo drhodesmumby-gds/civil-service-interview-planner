@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ArrowLeft, ArrowRight, Pause, Play, RotateCcw, CheckCircle2, AlertCircle, Clock, MessageSquarePlus, Sparkles, AlignLeft, List, ChevronDown, HelpCircle, SkipForward, ArrowDownCircle, Lightbulb } from 'lucide-react';
 import { InterviewSection } from '../types';
 import { Button } from './Button';
-import { generateFollowUpQuestions, FollowUpItem } from '../services/geminiService';
+import { generateFollowUpQuestions, FollowUpItem, formatGeminiError } from '../services/geminiService';
 
 interface LiveViewProps {
   sections: InterviewSection[];
@@ -172,10 +172,8 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
       setHasGeneratedFollowUpsForSection(true);
     } catch (e: any) {
       console.error(e);
-      if (e.message && e.message.includes('API Key not found')) {
-         alert("API Key not found. Please return to the Setup screen and configure your Gemini API Key.");
-         setShowFollowUps(false);
-      }
+      alert(formatGeminiError(e));
+      setShowFollowUps(false);
     } finally {
       setIsGeneratingFollowUps(false);
     }
@@ -191,9 +189,9 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
   };
 
   const getTimerColor = () => {
-    if (isOvertime) return 'text-[#d4351c] bg-[#f3f2f1] border-[#d4351c]';
-    if (timeLeft < 60) return 'text-[#b78c00] bg-[#fff8e1] border-[#b78c00]';
-    return 'text-[#0b0c0c] bg-white border-[#b1b4b6]';
+    if (isOvertime) return 'text-white bg-[#d4351c] border-[#d4351c]';
+    if (timeLeft < 60) return 'text-white bg-[#f47738] border-[#f47738]';
+    return 'text-white bg-[#1d70b8] border-[#1d70b8]';
   };
 
   const progressPercentage = ((currentSectionIndex) / sections.length) * 100;
@@ -204,37 +202,30 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#f3f2f1] font-sans text-[#0b0c0c]">
       {/* App Control Bar */}
-      <div className="px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0 bg-white border-b-2 border-[#0b0c0c]">
-        <div className="flex items-center gap-4">
-           <button onClick={onExit} className="text-sm font-bold text-[#1d70b8] underline hover:text-[#003078]">
-             Exit Setup
+      <div className="px-6 py-4 flex items-center justify-between z-10 shrink-0 bg-white border-b border-[#b1b4b6]">
+        <div className="flex items-center gap-6">
+           <button onClick={onExit} className="govuk-back-link govuk-!-margin-top-0 govuk-!-margin-bottom-0 border-0 bg-transparent cursor-pointer">
+             Back to Setup
            </button>
            <div className="h-6 w-px bg-[#b1b4b6]"></div>
-           <div>
-             <h2 className="text-xs font-bold uppercase tracking-wider text-[#505a5f]">Total Time</h2>
+           <div className="flex items-center gap-2">
+             <span className="text-sm font-bold text-[#505a5f]">Total Time:</span>
              <span className="font-mono text-lg text-[#0b0c0c] font-bold">{formatTime(elapsedTotal)}</span>
            </div>
         </div>
-        <div className="flex flex-col items-end w-1/3 max-w-xs">
-           <div className="flex justify-between w-full text-xs font-bold mb-1 text-[#0b0c0c]">
-             <span>Progress</span>
-             <span>{Math.round(progressPercentage)}%</span>
-           </div>
-           <div className="w-full h-2.5 overflow-hidden bg-[#f3f2f1] border border-[#0b0c0c]">
-             <div 
-                className="h-full transition-all duration-500 ease-out bg-[#1d70b8]"
-                style={{ width: `${progressPercentage}%` }}
-             ></div>
+        <div className="flex items-center">
+           <div className="govuk-body govuk-!-margin-bottom-0 govuk-!-font-weight-bold">
+             Question {currentSectionIndex + 1} of {sections.length}
            </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left: Timing Guide Panel */}
         <div 
           ref={containerRef}
-          className="flex-1 overflow-y-auto p-8 lg:p-12 scroll-smooth"
+          className="flex-1 overflow-y-auto p-8 lg:p-12 scroll-smooth scrollbar-hide"
         >
           <div className="max-w-3xl mx-auto space-y-8">
             <div>
@@ -313,9 +304,9 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
                   if (prompterMode === 'WORD') {
                     let styleClass = "text-[#0b0c0c] transition-colors duration-300"; 
                     if (isPassed) {
-                      styleClass = "text-slate-300 transition-colors duration-500";
+                      styleClass = "text-[#505a5f] transition-colors duration-500";
                     } else if (isCurrent) {
-                      styleClass = "text-[#0b0c0c] bg-[#ffdd00] py-1 px-1 rounded decoration-clone transition-all duration-200";
+                      styleClass = "text-[#0b0c0c] bg-[#ffdd00] py-1 px-1 rounded transition-all duration-200";
                     }
                     return (
                       <span key={index} {...refProps} className={styleClass}>
@@ -324,14 +315,14 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
                     );
                   } else {
                     // BLOCK MODE RENDERING
-                    let styleClass = "p-4 rounded-xl transition-all duration-500 border-l-4 ";
+                    let styleClass = "govuk-!-padding-4 transition-all duration-500 border-l-4 ";
                     
                     if (isPassed) {
-                      styleClass += "border-transparent text-slate-300 opacity-60 scale-95 origin-left";
+                      styleClass += "border-transparent text-[#505a5f] opacity-60 scale-95 origin-left";
                     } else if (isCurrent) {
-                      styleClass += "bg-white border-[#1d70b8] text-[#0b0c0c] shadow-md scale-100 ring-4 ring-[#ffdd00]/30";
+                      styleClass += "bg-white border-[#1d70b8] text-[#0b0c0c] scale-100 ring-4 ring-[#ffdd00]";
                     } else {
-                      styleClass += "border-transparent text-slate-500 scale-95 origin-left opacity-60"; // Future items dimmed slightly to focus attention
+                      styleClass += "border-transparent text-[#505a5f] scale-95 origin-left opacity-60"; // Future items dimmed slightly to focus attention
                     }
                     
                     // Retrieve weighted start time for this block
@@ -379,57 +370,39 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
         </div>
 
         {/* Right: Timer & Next Steps */}
-        <div className={`${sidePanelWidthClass} transition-all duration-500 border-l flex flex-col shadow-xl z-20 shrink-0 relative bg-white border-[#b1b4b6]`}>
+        <div className={`${sidePanelWidthClass} h-full overflow-hidden transition-all duration-500 border-l flex flex-col shadow-xl z-20 shrink-0 relative bg-white border-[#b1b4b6]`}>
           
           {/* Responsive Timer Header */}
-          {showFollowUps ? (
-            <div className={`flex items-center justify-between px-6 py-3 border-b shadow-sm ${getTimerColor()}`}>
-               <div className="flex items-center gap-2">
-                 <Clock className="w-4 h-4" />
-                 <span className="text-sm font-bold uppercase opacity-80">Remaining</span>
-               </div>
-               <div className="text-xl font-mono font-bold tracking-tight">
-                 {isOvertime ? '+' : ''}{formatTime(timeLeft)}
-               </div>
-               <div className="flex gap-2">
-                  <button onClick={toggleTimer} className="p-1.5 rounded-full hover:bg-black/10 transition-colors">
-                    {isActive ? <Pause className="w-4 h-4 fill-current"/> : <Play className="w-4 h-4 fill-current"/>}
-                  </button>
-               </div>
-            </div>
-          ) : (
-            <div className={`flex flex-col items-center justify-center p-8 border-b transition-colors duration-500 ${getTimerColor()}`}>
-              <span className="text-sm font-bold uppercase opacity-70 mb-2">
-                {isOvertime ? 'Overtime' : 'Time Remaining'}
-              </span>
-              <div className="text-7xl font-mono font-bold tracking-tighter tabular-nums">
-                {isOvertime ? '+' : ''}{formatTime(timeLeft)}
-              </div>
-              
-              <div className="flex gap-4 mt-6">
-                <button 
-                  onClick={toggleTimer}
-                  className="p-3 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
-                >
+          <div className={`flex items-center justify-between px-6 py-4 border-b shadow-sm transition-colors duration-500 shrink-0 ${getTimerColor()}`}>
+             <div className="flex items-center gap-2">
+               <Clock className="w-5 h-5" />
+               <span className="text-sm font-bold uppercase tracking-wider opacity-90">
+                 {isOvertime ? 'Overtime' : 'Remaining'}
+               </span>
+             </div>
+             <div className="text-4xl font-mono font-bold tracking-tight tabular-nums">
+               {isOvertime ? '+' : ''}{formatTime(timeLeft)}
+             </div>
+             <div className="flex gap-2">
+                <button onClick={toggleTimer} className="p-2.5 rounded hover:bg-black/20 transition-colors" title={isActive ? "Pause" : "Start"}>
                   {isActive ? <Pause className="w-6 h-6 fill-current"/> : <Play className="w-6 h-6 fill-current"/>}
                 </button>
                 <button 
                   onClick={() => {
                     setTimeLeft(currentSection.durationMinutes * 60);
-                    // Do not reset elapsedTotal here
                     setIsOvertime(false);
                     setIsActive(false);
                   }}
-                  className="p-3 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
+                  className="p-2.5 rounded hover:bg-black/20 transition-colors"
+                  title="Reset Timer"
                 >
-                  <RotateCcw className="w-6 h-6"/>
+                  <RotateCcw className="w-6 h-6" />
                 </button>
-              </div>
-            </div>
-          )}
+             </div>
+          </div>
 
           {/* Context / Follow-up Panel */}
-          <div className="flex-1 flex flex-col overflow-hidden relative bg-[#f3f2f1]">
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0 relative bg-[#f3f2f1]">
              
              {/* Mode Toggle Tabs */}
              <div className="flex border-b border-slate-200 bg-white">
@@ -451,7 +424,7 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
              </div>
 
              {/* Tab Content */}
-             <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+             <div className="flex-1 h-full overflow-y-auto p-6 scroll-smooth min-h-0">
                {showFollowUps ? (
                  <div className="space-y-6">
                     {isGeneratingFollowUps ? (
@@ -461,26 +434,26 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
                       </div>
                     ) : (
                       <>
-                        <div className="bg-white border-[#00703c] border-l-4 p-5 shadow-sm">
-                          <h4 className="font-bold flex items-center gap-2 mb-2 text-sm">
-                             <Sparkles className="w-4 h-4"/> Panel Insight
+                        <div className="govuk-inset-text">
+                          <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
+                             Panel Insight
                           </h4>
-                          <p className="text-sm leading-relaxed">{insight}</p>
+                          <p className="govuk-body">{insight}</p>
                         </div>
                         
                         <div className="space-y-4">
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Potential Questions</h4>
+                          <h4 className="govuk-heading-s text-[#505a5f] uppercase tracking-wider">Potential Questions</h4>
                           {followUps.map((item, i) => (
-                             <div key={i} className="flex flex-col gap-3 p-5 bg-white border-l-4 border-[#b1b4b6] shadow-sm">
-                               <div className="text-base font-bold text-[#0b0c0c]">
+                             <div key={i} className="govuk-!-padding-4 bg-white border-l-4 border-[#1d70b8] govuk-!-margin-bottom-4">
+                               <div className="govuk-body govuk-!-font-weight-bold">
                                  "{item.question}"
                                </div>
                                
-                               <div className="mt-2 p-3 text-sm leading-relaxed rounded-lg bg-[#f3f2f1] text-[#0b0c0c] border border-[#b1b4b6]">
-                                  <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider opacity-60">
-                                     <Lightbulb className="w-3 h-3" /> Answer Strategy
+                               <div className="govuk-inset-text govuk-!-margin-top-2 govuk-!-padding-top-2 govuk-!-padding-bottom-2">
+                                  <div className="govuk-body-s govuk-!-font-weight-bold uppercase opacity-60 govuk-!-margin-bottom-1">
+                                     Answer Strategy
                                   </div>
-                                  <div className="whitespace-pre-wrap">{item.answerContext}</div>
+                                  <div className="govuk-body-s whitespace-pre-wrap">{item.answerContext}</div>
                                </div>
                              </div>
                           ))}
@@ -510,20 +483,25 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
                    )}
                    
                    {!hasGeneratedFollowUpsForSection && (
-                     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white border border-[#1d70b8] p-6 text-center">
-                          <p className="text-sm mb-4 font-medium text-[#0b0c0c]">
-                            Finished this answer? 
-                            <span className="block text-xs font-normal opacity-70 mt-1">Get instant follow-up questions tailored to your experience.</span>
-                          </p>
-                          <Button 
-                            onClick={handleGenerateFollowUps} 
-                            className="w-full text-sm py-3"
-                            icon={<MessageSquarePlus className="w-4 h-4"/>}
-                           
-                          >
-                            Predict Follow-up Questions
-                          </Button>
+                     <div className="govuk-!-margin-top-6">
+                        <div className="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+                          <div className="govuk-notification-banner__header">
+                            <h2 className="govuk-notification-banner__title" id="govuk-notification-banner-title">
+                              Suggest Follow-ups
+                            </h2>
+                          </div>
+                          <div className="govuk-notification-banner__content">
+                            <p className="govuk-notification-banner__heading">
+                              Finished this answer?
+                            </p>
+                            <p className="govuk-body">Get instant follow-up questions tailored to your experience.</p>
+                            <button 
+                              onClick={handleGenerateFollowUps} 
+                              className="govuk-button govuk-!-margin-bottom-0"
+                            >
+                              Suggest Follow-up Questions
+                            </button>
+                          </div>
                         </div>
                      </div>
                    )}
@@ -533,26 +511,21 @@ export const LiveView: React.FC<LiveViewProps> = ({ sections, careerHistory, onE
           </div>
 
           {/* Navigation Controls */}
-          <div className="p-6 border-t space-y-3 shrink-0 relative z-20 bg-[#f3f2f1] border-[#b1b4b6]">
-             <Button 
+          <div className="p-6 border-t flex flex-row gap-4 items-center shrink-0 relative z-20 bg-[#f3f2f1] border-[#b1b4b6]">
+             <button 
                onClick={handleNext} 
-               className="w-full py-4 text-lg justify-between group"
-               variant="primary"
-              
+               className="govuk-button w-full justify-center govuk-!-margin-bottom-0"
              >
                {currentSectionIndex < sections.length - 1 ? 'Next Section' : 'Finish Mock Interview'}
-               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-             </Button>
+             </button>
 
-             <Button 
+             <button 
                onClick={handlePrev} 
-               className="w-full"
-               variant="ghost"
+               className="govuk-button govuk-button--secondary w-full justify-center govuk-!-margin-bottom-0"
                disabled={currentSectionIndex === 0}
-              
              >
-               <ArrowLeft className="w-4 h-4 mr-2" /> Previous
-             </Button>
+               Previous
+             </button>
           </div>
         </div>
       </div>

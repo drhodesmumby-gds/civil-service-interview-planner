@@ -46,6 +46,14 @@ html, body {
 .justify-between { justify-content: space-between; }
 .w-full { width: 100%; }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 /* Methodological Overrides */
 
 /* Expand global grid width to efficiently utilize widescreen desktop space */
@@ -60,9 +68,18 @@ html, body {
   display: flex;
   flex-direction: column;
 }
+.live-view-dashboard .govuk-width-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
 .live-view-dashboard .govuk-main-wrapper {
   flex-grow: 1;
   display: flex;
+  flex-direction: column;
   padding-top: 0;
   padding-bottom: 0;
   overflow: hidden;

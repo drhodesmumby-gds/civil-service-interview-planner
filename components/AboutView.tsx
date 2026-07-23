@@ -27,7 +27,7 @@ export const AboutView: React.FC = () => {
   };
 
   return (
-    <div className="govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+    <div className="govuk-!-margin-bottom-8">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-6">About This Tool</h1>
@@ -79,7 +79,7 @@ export const AboutView: React.FC = () => {
                 I built this tool to assist in preparing for a lengthy round of interviews, in which I always struggled on timing my questions in particular. I always meant to make it public but never quite got round to it, and now feel slightly guilted into it by the recent announcement that <a href="https://www.civilserviceworld.com/professions/article/civil-service-success-profiles-to-be-scrapped" target="_blank" rel="noreferrer" className="govuk-link">Success Profiles are being scrapped</a>. I say guilted - there is a genuine feeling there, as I did genuinely actually find the tool very useful for my prep as a neurodiverse candidate, and I do wonder if it could have been more helpful for others using Success Profiles.
               </p>
               <p className="govuk-body">
-                With that said, the generative AI functionality (the bit most pertinent to Success Profiles) I think is mostly not all that interesting or hugely effective. The prompts are not amazingly well-defined, particularly missing the actual Behaviours criteria (easily added with some effort, but I was never as interested in that aspect with this tool) and, at least when I was last doing this, even Gemini 3 Pro - then cutting edge - struggled with developing truly good material even with the context of my full career history. There are far better tools and prompts out there to support the actual drafting of your preparation material.
+                With that said, the generative AI functionality (the bit most pertinent to Success Profiles) I think is mostly not all that interesting or hugely effective. The prompts are not amazingly well-defined and, at least when I was last doing this, even Gemini 3 Pro - then cutting edge - struggled with developing truly good material even with the context of my full career history. There are far better tools and prompts out there to support the actual drafting of your preparation material.
               </p>
               <p className="govuk-body">
                 Some of the feature ideas did inform a much more interesting AI tutoring project I undertook a little later however, which I intend to make public soon.

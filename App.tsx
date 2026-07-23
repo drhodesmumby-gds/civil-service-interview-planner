@@ -13,7 +13,7 @@ const Header: React.FC = () => (
         <a href="#" className="govuk-header__link govuk-header__link--homepage">
           <span className="govuk-header__logotype">
             <span className="govuk-header__logotype-text">
-              Civil Service Interview Companion
+              Civil Service Interview Practice
             </span>
           </span>
         </a>
@@ -25,9 +25,11 @@ const Header: React.FC = () => (
 const ServiceNavigation: React.FC<{
   currentView: AppState;
   onNavigate: (view: AppState) => void;
-}> = ({ currentView, onNavigate }) => (
+  onStart: () => void;
+  canStart: boolean;
+}> = ({ currentView, onNavigate, onStart, canStart }) => (
   <div className="govuk-service-navigation" data-module="govuk-service-navigation">
-    <div className="govuk-width-container">
+    <div className="govuk-width-container flex justify-between items-center w-full">
       <div className="govuk-service-navigation__container">
         <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
           <ul className="govuk-service-navigation__list">
@@ -64,6 +66,19 @@ const ServiceNavigation: React.FC<{
           </ul>
         </nav>
       </div>
+      
+      {currentView === AppState.SETUP && (
+        <button 
+          onClick={onStart}
+          disabled={!canStart}
+          className="govuk-button govuk-button--start govuk-!-margin-bottom-0 govuk-!-margin-top-0 scale-90 origin-right transition-all"
+        >
+          Start Mock Interview
+          <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false" style={{ marginLeft: '10px' }}>
+            <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+          </svg>
+        </button>
+      )}
     </div>
   </div>
 );
@@ -96,7 +111,12 @@ const App: React.FC = () => {
         <Header />
         
         {appState !== AppState.RUNNING && (
-          <ServiceNavigation currentView={appState} onNavigate={setAppState} />
+          <ServiceNavigation 
+            currentView={appState} 
+            onNavigate={setAppState} 
+            onStart={() => setAppState(AppState.RUNNING)}
+            canStart={sections.length > 0}
+          />
         )}
         
         <div className="govuk-width-container">
