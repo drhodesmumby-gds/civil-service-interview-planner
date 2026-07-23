@@ -26,8 +26,6 @@ interface SetupViewProps {
   careerHistory: string;
   setCareerHistory: React.Dispatch<React.SetStateAction<string>>;
   onStart: () => void;
-  onShowAbout: () => void;
-  onShowPrompts: () => void;
 }
 
 const CIVIL_SERVICE_GRADES = [
@@ -67,9 +65,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   setSections, 
   careerHistory,
   setCareerHistory,
-  onStart,
-  onShowAbout,
-  onShowPrompts
+  onStart
 }) => {
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -479,20 +475,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
           >
             <KeyRound className="w-5 h-5" />
             API Key
-          </button>
-          <button 
-            onClick={onShowPrompts}
-            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
-          >
-            <Settings className="w-5 h-5" />
-            Prompt Settings
-          </button>
-          <button 
-            onClick={onShowAbout}
-            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 flex items-center gap-2"
-          >
-            <HelpCircle className="w-5 h-5" />
-            About / Help
           </button>
         </div>
       </header>

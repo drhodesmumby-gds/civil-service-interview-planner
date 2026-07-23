@@ -12,9 +12,7 @@ import {
   DEFAULT_PROMPTS 
 } from '../services/geminiService';
 
-interface PromptEditorViewProps {
-  onBack: () => void;
-}
+interface PromptEditorViewProps {}
 
 interface PromptTabInfo {
   type: PromptType;
@@ -93,7 +91,7 @@ const PROMPT_TABS: PromptTabInfo[] = [
   }
 ];
 
-export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack }) => {
+export const PromptEditorView: React.FC<PromptEditorViewProps> = () => {
   const [prompts, setPrompts] = useState<PromptTemplates>(getStoredPrompts());
   const [activeTab, setActiveTab] = useState<PromptType>('PLAN');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -192,9 +190,9 @@ export const PromptEditorView: React.FC<PromptEditorViewProps> = ({ onBack }) =>
 
   return (
     <div>
-      <a href="#" className="govuk-back-link" onClick={(e) => { e.preventDefault(); onBack(); }}>Back to Planner</a>
       
-      <div className="govuk-grid-row govuk-!-margin-top-4">
+    <div className="govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+      <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-6">Prompt Editor</h1>
         </div>

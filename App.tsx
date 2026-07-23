@@ -22,6 +22,52 @@ const Header: React.FC = () => (
   </header>
 );
 
+const ServiceNavigation: React.FC<{
+  currentView: AppState;
+  onNavigate: (view: AppState) => void;
+}> = ({ currentView, onNavigate }) => (
+  <div className="govuk-service-navigation" data-module="govuk-service-navigation">
+    <div className="govuk-width-container">
+      <div className="govuk-service-navigation__container">
+        <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
+          <ul className="govuk-service-navigation__list">
+            <li className="govuk-service-navigation__item">
+              <a 
+                href="#" 
+                className={`govuk-service-navigation__link ${currentView === AppState.SETUP ? 'govuk-service-navigation__link--active' : ''}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(AppState.SETUP); }}
+                aria-current={currentView === AppState.SETUP ? 'page' : undefined}
+              >
+                Planner Setup
+              </a>
+            </li>
+            <li className="govuk-service-navigation__item">
+              <a 
+                href="#" 
+                className={`govuk-service-navigation__link ${currentView === AppState.PROMPTS ? 'govuk-service-navigation__link--active' : ''}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(AppState.PROMPTS); }}
+                aria-current={currentView === AppState.PROMPTS ? 'page' : undefined}
+              >
+                Prompt Editor
+              </a>
+            </li>
+            <li className="govuk-service-navigation__item">
+              <a 
+                href="#" 
+                className={`govuk-service-navigation__link ${currentView === AppState.ABOUT ? 'govuk-service-navigation__link--active' : ''}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(AppState.ABOUT); }}
+                aria-current={currentView === AppState.ABOUT ? 'page' : undefined}
+              >
+                About Tool
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+);
+
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.SETUP);
   const [careerHistory, setCareerHistory] = useState<string>('');
@@ -46,10 +92,27 @@ const App: React.FC = () => {
     <>
       {showDisclaimer && <DisclaimerModal onAccept={() => setShowDisclaimer(false)} />}
       
-      <div className="app-container">
+      <div className={appState === AppState.RUNNING ? "app-container live-view-dashboard" : "app-container"}>
         <Header />
         
+        {appState !== AppState.RUNNING && (
+          <ServiceNavigation currentView={appState} onNavigate={setAppState} />
+        )}
+        
         <div className="govuk-width-container">
+          {appState !== AppState.RUNNING && (
+            <div className="govuk-phase-banner">
+              <p className="govuk-phase-banner__content">
+                <strong className="govuk-tag govuk-phase-banner__content__tag">
+                  EXPERIMENTAL
+                </strong>
+                <span className="govuk-phase-banner__text">
+                  This is an unofficial experimental tool and is not affiliated with the UK Government.
+                </span>
+              </p>
+            </div>
+          )}
+
           {appState === AppState.SETUP && (
             <main className="govuk-main-wrapper pb-24" id="main-content" role="main">
               <SetupView 
@@ -58,25 +121,19 @@ const App: React.FC = () => {
                 careerHistory={careerHistory}
                 setCareerHistory={setCareerHistory}
                 onStart={() => setAppState(AppState.RUNNING)}
-                onShowAbout={() => setAppState(AppState.ABOUT)}
-                onShowPrompts={() => setAppState(AppState.PROMPTS)}
               />
             </main>
           )}
           
           {appState === AppState.ABOUT && (
             <main className="govuk-main-wrapper" id="main-content" role="main">
-              <AboutView 
-                onBack={() => setAppState(AppState.SETUP)}
-              />
+              <AboutView />
             </main>
           )}
 
           {appState === AppState.PROMPTS && (
             <main className="govuk-main-wrapper" id="main-content" role="main">
-              <PromptEditorView 
-                onBack={() => setAppState(AppState.SETUP)}
-              />
+              <PromptEditorView />
             </main>
           )}
           

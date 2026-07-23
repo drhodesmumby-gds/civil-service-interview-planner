@@ -45,3 +45,25 @@ html, body {
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
 .w-full { width: 100%; }
+
+/* Methodological Overrides */
+
+/* Expand global grid width to efficiently utilize widescreen desktop space */
+.govuk-width-container {
+  max-width: 1400px !important;
+}
+
+/* Dashboard lock specifically for the LiveView teleprompter */
+.live-view-dashboard {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.live-view-dashboard .govuk-main-wrapper {
+  flex-grow: 1;
+  display: flex;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
