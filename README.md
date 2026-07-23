@@ -22,14 +22,14 @@ Some of the feature ideas did inform a much more interesting AI tutoring project
 - ⏱️ **Mock Interview Runner & Auto-Scroll Guide**: Practice delivering answers within target timeframes (e.g., 5-minute behaviour blocks) with smooth visual pacing.
 - ❓ **Follow-Up Question Predictor**: Generate realistic panel follow-up questions based on your specific notes to test your preparation on the spot.
 - 📄 **Document Import**: Import job descriptions, personal statements, or existing notes from PDF and Word (`.docx`) files.
-- 🏛️ **GDS / GOV.UK Theme Toggle**: Switch between a clean modern theme and a pseudo GOV.UK Design System aesthetic.
+- 🏛️ **GOV.UK Design System**: Clean, accessible, and familiar aesthetic using the official `govuk-frontend` and `@ministryofjustice/frontend` styling, ensuring zero visual distractions.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite
-- **Styling**: Tailwind CSS, Lucide React Icons
+- **Styling**: Vanilla CSS, `govuk-frontend`, `@ministryofjustice/frontend`, Lucide React Icons
 - **AI Integration**: `@google/genai` (Gemini API)
 - **Document Processing**: `pdfjs-dist`, `mammoth` (Word docx parsing)
 
